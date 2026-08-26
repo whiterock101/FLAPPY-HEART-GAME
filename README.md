@@ -29,8 +29,7 @@ A faith-based, Flappy Bird-style game made for kids. Guide a little heart with w
 Once this repo is published with GitHub Pages, the game is playable at:
 
 ```
-https://<your-username>.github.io/<repo-name>/
-```
+https://whiterock101.github.io/PURE-HEART-GAME/``
 
 ## 🛠 Setup (GitHub Pages)
 
