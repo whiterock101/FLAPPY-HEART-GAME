@@ -9,6 +9,7 @@
   "orientation": "portrait",
   "background_color": "#FF4F6D",
   "theme_color": "#FF4F6D",
+  "categories": ["games", "education", "kids"],
   "icons": [
     {
       "src": "icon-192.png",
