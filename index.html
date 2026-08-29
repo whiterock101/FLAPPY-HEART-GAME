@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Flappy Heart — Avoid the Sins</title>
+<meta name="description" content="A faith-based Flappy-Bird-style game for kids: guide a little heart past the seven deadly sins, help those in need along the way, and if it stumbles, rush to confession to be made clean again!">
+<meta property="og:title" content="Flappy Heart — Avoid the Sins">
+<meta property="og:description" content="Help the little heart dodge Pride, Anger, Greed, Envy, Gluttony, Sloth & Lies — and fly toward people who need help to show God's love. Bump a sin? Drag your heart to confession before time runs out!">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Flappy Heart — Avoid the Sins">
+<meta name="twitter:description" content="A kids' game about avoiding sin and choosing love: dodge temptation, help others, and seek confession to heal and keep flying!">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800&display=swap');
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  background:#EDE8F5;
+  font-family:'Nunito',sans-serif;
+  padding:20px 10px;
+}
+h1{
+  font-family:'Fredoka',sans-serif;
+  font-size:20px;
+  color:#4B2E56;
+  margin:0;
+  text-align:center;
+}
+.game-wrap{
+  position:relative;
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 18px 45px rgba(75,46,86,0.35);
+  border:6px solid #fff;
+}
+#gameCanvas{
+  display:block;
+  touch-action:none;
+}
+.overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  background:rgba(30,15,45,0.55);
+  color:#fff;
+  text-align:center;
+  padding:20px;
+}
+.overlay h2{
+  font-family:'Fredoka',sans-serif;
+  font-size:26px;
+  margin:0 0 4px;
+}
+.overlay p{
+  font-family:'Nunito',sans-serif;
+  font-size:14px;
+  margin:0;
+  max-width:260px;
+  line-height:1.4;
+}
+.overlay button{
+  margin-top:10px;
+  font-family:'Fredoka',sans-serif;
+  font-weight:600;
+  font-size:16px;
+  border:none;
+  border-radius:999px;
+  padding:12px 28px;
+  cursor:pointer;
+  background:#FF4F6D;
+  color:#fff;
+  box-shadow:0 6px 16px rgba(255,79,109,0.5);
+}
+.overlay button:active{transform:scale(0.95);}
+.overlay button.secondary-btn{
+  background:#fff;
+  color:#4B2E56;
+  border:2px solid #FF4F6D;
+  box-shadow:none;
+}
+.hidden{display:none !important;}
+.tip{
+  font-size:12.5px;
+  color:#5B4B78;
+  text-align:center;
+  max-width:340px;
+}
+.support-btn{
+  display:inline-block;
+  font-family:'Fredoka',sans-serif;
+  font-weight:600;
+  font-size:14px;
+  text-decoration:none;
+  color:#3A2141;
+  background:#FFC93C;
+  padding:10px 22px;
+  border-radius:999px;
+  box-shadow:0 6px 14px rgba(255,201,60,0.5);
+  transition:transform 0.15s;
+}
+.support-btn:active{transform:scale(0.95);}
+.sound-btn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:9;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  border:none;
+  background:rgba(0,0,0,0.35);
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.sound-btn:active{transform:scale(0.9);}
+.menu-btn{
+  position:absolute;
+  top:10px;
+  left:10px;
+  z-index:9;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  border:none;
+  background:rgba(0,0,0,0.35);
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.menu-btn:active{transform:scale(0.9);}
+.overlay.scrollable{
+  justify-content:flex-start;
+  overflow-y:auto;
+  padding-top:24px;
+  padding-bottom:24px;
+}
+.dict-intro{
+  font-size:12.5px;
+  opacity:0.9;
+  margin:0 0 10px;
+}
+.sins-row{
+  width:100%;
+  text-align:left;
+  background:rgba(255,255,255,0.12);
+  border-radius:12px;
+  padding:8px 12px;
+  margin-bottom:8px;
+}
+.sins-row .sin-title{
+  font-family:'Fredoka',sans-serif;
+  font-weight:700;
+  font-size:14px;
+  margin-bottom:2px;
+}
+.sins-row .sin-def{
+  font-family:'Nunito',sans-serif;
+  font-size:12.5px;
+  line-height:1.35;
+  margin:0;
+  opacity:0.95;
+}
+#progressText{
+  font-family:'Fredoka',sans-serif;
+  font-size:16px;
+  line-height:1.6;
+}
+.credit{
+  font-size:10.5px;
+  color:#A69BB8;
+  text-align:center;
+  margin:2px 0 0;
+  opacity:0.75;
+}
+</style>
+</head>
+<body>
+
+<h1>💗 Flappy Heart<br><span style="font-size:14px; font-weight:500;">Avoid sin, but shine brighter through love and mercy!</span></h1>
+
+<div class="game-wrap">
+  <button id="menuBtn" class="menu-btn">☰</button>
+  <button id="soundBtn" class="sound-btn">🔊</button>
+  <canvas id="gameCanvas" width="380" height="620"></canvas>
+  <div class="overlay" id="startOverlay">
+    <h2>Flappy Heart</h2>
+    <p>Tap, click, or press Space to help the little heart rise. Dodge the sin pillars, but most of all — look for people who need help, and fly to them with love!</p>
+    <button id="startBtn">▶ Start</button>
+    <button id="continueBtn" class="hidden secondary-btn">↻ Continue</button>
+  </div>
+  <div class="overlay hidden" id="overOverlay">
+    <h2>Oops!</h2>
+    <p id="finalScoreText">You avoided 0 sins.</p>
+    <p id="bestScoreText"></p>
+    <button id="retryBtn">↻ Try Again</button>
+  </div>
+  <div class="overlay hidden" id="menuOverlay">
+    <h2>Menu</h2>
+    <button id="openDictBtn">📖 Sins Guide</button>
+    <button id="showProgressBtn">📊 My Progress</button>
+    <button id="resumeBtn" class="secondary-btn">▶ Resume</button>
+  </div>
+  <div class="overlay hidden scrollable" id="dictionaryOverlay">
+    <h2>📖 Sins Guide</h2>
+    <p class="dict-intro">A sin is a choice that hurts our friendship with God or with others. Here's what each one means:</p>
+    <div id="sinsList"></div>
+    <button id="closeDictBtn">▶ Back to Game</button>
+  </div>
+  <div class="overlay hidden" id="progressOverlay">
+    <h2>Your Progress 💗</h2>
+    <p id="progressText"></p>
+    <p class="dict-intro">Your score is saved automatically — come back anytime!</p>
+    <button id="closeProgressBtn">▶ Resume</button>
+  </div>
+</div>
+
+<p class="tip">Every pillar is a temptation — pride, anger, greed, envy, gluttony, sloth, and lies. If you bump one, don't worry — drag your heart to the ✝️ confession before time runs out to be made clean again. And watch for people who need help — flying to them plants a rose and shows God's love in action! 🌹</p>
+
+<a href="https://ko-fi.com/flappyheart" target="_blank" rel="noopener" class="support-btn">☕ Support this game</a>
+
+<p class="credit">To God be the glory! – Maria Lea</p>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const startOverlay = document.getElementById('startOverlay');
+const overOverlay = document.getElementById('overOverlay');
+const startBtn = document.getElementById('startBtn');
+const continueBtn = document.getElementById('continueBtn');
+const retryBtn = document.getElementById('retryBtn');
+const finalScoreText = document.getElementById('finalScoreText');
+const bestScoreText = document.getElementById('bestScoreText');
+
+const SINS_LEVEL1 = [
+  {label:'Pride', icon:'👑'},
+  {label:'Anger', icon:'😡'},
+  {label:'Greed', icon:'💰'},
+  {label:'Envy', icon:'👀'},
+  {label:'Gluttony', icon:'🍔'},
+  {label:'Sloth', icon:'🦥'},
+  {label:'Lies', icon:'🐍'}
+];
+
+const SINS_LEVEL2 = [
+  {label:'Lying', icon:'🤥'},
+  {label:'Cheating', icon:'📝'},
+  {label:'Bullying', icon:'😈'},
+  {label:'Disobedience', icon:'🙅'},
+  {label:'Stealing', icon:'🖐️'},
+  {label:'Jealousy', icon:'😒'},
+  {label:'Disrespect', icon:'🙄'}
+];
+
+const SINS_LEVEL3 = [
+  {label:'Gossip', icon:'🗣️'},
+  {label:'Excuses', icon:'🙋'},
+  {label:'Ingratitude', icon:'🙁'},
+  {label:'Complaining', icon:'😤'}
+];
+
+const SINS_LEVEL4 = [
+  {label:'Unforgiveness', icon:'💢'},
+  {label:'Selfishness', icon:'🙈'},
+  {label:'Vanity', icon:'💅'},
+  {label:'Rudeness', icon:'👎'}
+];
+
+// New sins introduced at levels 1–4 (index 0–3). Beyond that, no new sins —
+// just a harder version of everything the player has already learned.
+const SIN_LEVEL_ADDITIONS = [SINS_LEVEL1, SINS_LEVEL2, SINS_LEVEL3, SINS_LEVEL4];
+
+// Kid-friendly (ages 6–10) definitions for the Sins Guide
+const SIN_DEFINITIONS = {
+  'Pride': "Thinking you're better than everyone else and not wanting to say sorry.",
+  'Anger': "Feeling really mad and wanting to yell, hit, or be mean when things don't go your way.",
+  'Greed': "Always wanting more and more, and not wanting to share.",
+  'Envy': "Feeling upset because someone else has something you want.",
+  'Gluttony': "Eating or wanting way more than you need, even when you're already full.",
+  'Sloth': "Being too lazy to do what you should do, like chores or homework.",
+  'Lies': "Saying things that are not true.",
+  'Lying': "Saying something false on purpose so people will believe it.",
+  'Cheating': "Breaking the rules to win a game or get a better grade unfairly.",
+  'Bullying': "Being mean or hurting someone on purpose, again and again.",
+  'Disobedience': "Choosing not to listen to your parents, teachers, or God.",
+  'Stealing': "Taking something that isn't yours without asking.",
+  'Jealousy': "Feeling upset when someone else gets attention or good things.",
+  'Disrespect': "Being rude or unkind to someone, like rolling your eyes or talking back.",
+  'Gossip': "Talking about someone behind their back in an unkind way.",
+  'Excuses': "Making up reasons to avoid taking responsibility for a mistake.",
+  'Ingratitude': "Forgetting to say thank you or not appreciating what you have.",
+  'Complaining': "Grumbling about everything instead of being thankful.",
+  'Unforgiveness': "Staying angry at someone and not giving them a second chance.",
+  'Selfishness': "Only thinking about yourself and not caring about others.",
+  'Vanity': "Caring too much about how you look or wanting everyone to admire you.",
+  'Rudeness': "Being impolite or unkind to others on purpose."
+};
+
+function sinsForLevel(idx){
+  let pool = [];
+  for (let i = 0; i <= idx; i++) pool = pool.concat(SIN_LEVEL_ADDITIONS[i] || []);
+  return pool;
+}
+function newSinsForLevel(idx){ return SIN_LEVEL_ADDITIONS[idx] || []; }
+function levelName(idx){ return `Level ${idx + 1}`; }
+function levelSpeed(idx){ return Math.min(2.6 + idx * 0.35, 6); }
+function levelGap(idx){ return Math.max(168 - idx * 14, 100); }
+function levelThreshold(idx){ return idx * 25; } // every 25 points, forever: 0, 25, 50, 75, 100...
+
+// The higher the player gets, the more generous and eventful the game becomes
+function bonusScoreChance(idx){ return Math.min(0.45, 0.15 + idx * 0.025); } // chance a passed pillar is worth +5 instead of +1
+function charityIntervalForLevel(idx){ return Math.max(8, CHARITY_INTERVAL - idx); } // Works of Mercy appear more often over time
+function rainbowIntervalForLevel(idx){ return Math.max(10000, RAINBOW_CHECK_INTERVAL - idx*1500); }
+function angelIntervalForLevel(idx){ return Math.max(8000, ANGEL_CHECK_INTERVAL - idx*1200); }
+
+const GRAVITY = 0.42;
+const FLAP = -7.6;
+const PIPE_W = 78;
+const SPAWN_EVERY = 160; // frames — more distance between pillars
+const WOUND_DURATION = 5000; // ms to reach confession
+const CONFESSION_R = 30;
+
+let currentGap = levelGap(0);
+let pipeSpeed = levelSpeed(0);
+let levelIndex = 0;
+
+// wings/halo grow more radiant with each level — a visible sign of growth
+const GROWTH_COLORS = ['#FFFFFF', '#FFF3D0', '#FFD873', '#FFC93C'];
+
+// Charity opportunities — the heart flies TOWARD these to help, inspired by the Works of Mercy
+const CHARITY_ITEMS = [
+  { icon:'🍞', label:'Feed the hungry', msg:'You shared your bread! "Whatever you did for the least of these, you did for me." 💗' },
+  { icon:'😢', label:'Comfort the sad', msg:'You comforted a friend who was sad! Kindness heals hearts too. 💗' },
+  { icon:'🤕', label:'Help the hurt', msg:'You helped someone who fell down! Being kind is being like Jesus. 💗' },
+  { icon:'👵', label:'Help the elderly', msg:'You helped an elderly person carry their things! Honoring others pleases God. 💗' },
+  { icon:'📚', label:'Teach a friend', msg:'You taught a friend something new! Sharing what you know is a gift. 💗' },
+  { icon:'🧥', label:'Give warmth', msg:'You gave your coat to someone cold! Generosity warms hearts. 💗' }
+];
+const CHARITY_INTERVAL = 15; // a charity opportunity appears every 15 points
+const CHARITY_R = 38;
+const CHARITY_LIFESPAN = 9000; // ms visible before it drifts away
+
+let charityTarget = null;
+let nextCharityScore = CHARITY_INTERVAL;
+let charityToast = null;
+
+// Roses planted on the ground each time a Work of Mercy is completed
+const ROSE_COLORS = ['#FF2D55', '#FF6B00', '#FFD400', '#B33DFF', '#FF3DA6', '#00C2FF'];
+let roses = [];
+const ROSE_CROWD_THRESHOLD = 8; // once this many roses are planted, rainbows may start appearing
+
+// Rainbow — appears sometimes when the rose garden gets crowded, never at night
+let rainbow = { active: false, startedAt: 0, duration: 15000 };
+let nextRainbowCheck = 0;
+const RAINBOW_CHECK_INTERVAL = 22000;
+
+// Angels — occasionally drift across the sky, purely decorative
+let angels = [];
+
+// Floating "+1" / "+5" popups shown briefly when a pillar is passed
+let scorePopups = [];
+let nextAngelCheck = 0;
+const ANGEL_CHECK_INTERVAL = 20000;
+
+// state: 'start' | 'playing' | 'wounded' | 'continue' | 'levelup' | 'grace' | 'over'
+let state = 'start';
+let heart, pillars, frame, score, best;
+let confessionSpot = null;
+let woundEndTime = 0;
+let isPointerDown = false;
+let graceSinLabel = null;
+let clouds = [];
+let paused = false;
+let pauseStartedAt = 0;
+
+// --- Menu / Sins Guide / Progress overlays ---
+const menuBtn = document.getElementById('menuBtn');
+const menuOverlay = document.getElementById('menuOverlay');
+const dictionaryOverlay = document.getElementById('dictionaryOverlay');
+const progressOverlay = document.getElementById('progressOverlay');
+const sinsListEl = document.getElementById('sinsList');
+const progressText = document.getElementById('progressText');
+const openDictBtn = document.getElementById('openDictBtn');
+const showProgressBtn = document.getElementById('showProgressBtn');
+const resumeBtn = document.getElementById('resumeBtn');
+const closeDictBtn = document.getElementById('closeDictBtn');
+const closeProgressBtn = document.getElementById('closeProgressBtn');
+
+// Populate the sins guide once, in the order sins are introduced
+(function populateSinsGuide(){
+  SIN_LEVEL_ADDITIONS.flat().forEach(sin=>{
+    const def = SIN_DEFINITIONS[sin.label] || '';
+    const row = document.createElement('div');
+    row.className = 'sins-row';
+    row.innerHTML = `<div class="sin-title">${sin.icon} ${sin.label}</div><p class="sin-def">${def}</p>`;
+    sinsListEl.appendChild(row);
+  });
+})();
+
+function pauseGame(){
+  if (paused) return;
+  paused = true;
+  pauseStartedAt = Date.now();
+}
+function resumeGame(){
+  if (!paused) return;
+  const pausedMs = Date.now() - pauseStartedAt;
+  if (woundEndTime) woundEndTime += pausedMs;
+  if (charityTarget) charityTarget.bornAt += pausedMs;
+  paused = false;
+  hideAllOverlaysExceptGame();
+}
+function hideAllOverlaysExceptGame(){
+  menuOverlay.classList.add('hidden');
+  dictionaryOverlay.classList.add('hidden');
+  progressOverlay.classList.add('hidden');
+}
+
+menuBtn.addEventListener('click', ()=>{
+  pauseGame();
+  menuOverlay.classList.remove('hidden');
+});
+resumeBtn.addEventListener('click', resumeGame);
+openDictBtn.addEventListener('click', ()=>{
+  menuOverlay.classList.add('hidden');
+  dictionaryOverlay.classList.remove('hidden');
+});
+closeDictBtn.addEventListener('click', resumeGame);
+showProgressBtn.addEventListener('click', ()=>{
+  menuOverlay.classList.add('hidden');
+  progressText.textContent = `Score: ${score} 💗   Roses planted: ${roses.length} 🌹   Best: ${best} 🏆`;
+  progressOverlay.classList.remove('hidden');
+});
+closeProgressBtn.addEventListener('click', resumeGame);
+
+// --- Sound engine (synthesized, no external audio files needed) ---
+const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let soundOn = true;
+const soundBtn = document.getElementById('soundBtn');
+
+function ensureAudio(){
+  try{
+    if (!audioCtx) audioCtx = new AudioCtxClass();
+    else if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e){ audioCtx = null; }
+}
+
+function tone(freqStart, freqEnd, duration, type, volume){
+  if (!soundOn || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  const now = audioCtx.currentTime;
+  osc.frequency.setValueAtTime(freqStart, now);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 1), now + duration);
+  gain.gain.setValueAtTime(volume, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + duration);
+}
+
+function playFlap(){ tone(520, 760, 0.09, 'sine', 0.18); }
+function playScore(){ tone(880, 1300, 0.12, 'triangle', 0.2); }
+function playBonusScore(){
+  if (!soundOn || !audioCtx) return;
+  [880, 1108.73, 1396.91, 1760].forEach((f, i) => {
+    setTimeout(() => tone(f, f, 0.14, 'triangle', 0.2), i * 70);
+  });
+}
+function playHit(){ tone(240, 70, 0.35, 'sawtooth', 0.25); }
+function playHeal(){
+  if (!soundOn || !audioCtx) return;
+  [523.25, 659.25, 783.99].forEach((f, i) => {
+    setTimeout(() => tone(f, f, 0.18, 'sine', 0.16), i * 90);
+  });
+}
+function playLevelUp(){
+  if (!soundOn || !audioCtx) return;
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+    setTimeout(() => tone(f, f, 0.2, 'triangle', 0.18), i * 100);
+  });
+}
+function playGrace(){
+  if (!soundOn || !audioCtx) return;
+  [987.77, 1318.51].forEach((f, i) => {
+    setTimeout(() => tone(f, f, 0.3, 'sine', 0.14), i * 130);
+  });
+}
+function playCharity(){
+  if (!soundOn || !audioCtx) return;
+  [659.25, 783.99, 987.77, 1174.66].forEach((f, i) => {
+    setTimeout(() => tone(f, f, 0.16, 'triangle', 0.16), i * 80);
+  });
+}
+
+soundBtn.addEventListener('click', ()=>{
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  if (soundOn) ensureAudio();
+});
+
+function resetGame(){
+  heart = { x: 90, y: H/2, vy: 0, r: 16, rot: 0, sick: false, graceAvailable: true };
+  pillars = [];
+  frame = 0;
+  score = 0;
+  levelIndex = 0;
+  pipeSpeed = levelSpeed(0);
+  currentGap = levelGap(0);
+  confessionSpot = null;
+  graceSinLabel = null;
+  charityTarget = null;
+  nextCharityScore = CHARITY_INTERVAL;
+  charityToast = null;
+  roses = [];
+  rainbow = { active: false, startedAt: 0, duration: 15000 };
+  nextRainbowCheck = Date.now() + RAINBOW_CHECK_INTERVAL;
+  angels = [];
+  nextAngelCheck = Date.now() + ANGEL_CHECK_INTERVAL;
+  scorePopups = [];
+  state = 'start';
+}
+
+function initClouds(){
+  clouds = [];
+  for (let i=0;i<5;i++){
+    clouds.push({ x: Math.random()*W, y: 40 + Math.random()*160, s: 0.6 + Math.random()*0.8, speed: 0.3 + Math.random()*0.4 });
+  }
+}
+
+let stars = [];
+function initStars(){
+  stars = [];
+  for (let i=0;i<22;i++){
+    stars.push({
+      x: Math.random()*W,
+      y: Math.random()*(H*0.55),
+      r: 1 + Math.random()*1.6,
+      twinklePhase: Math.random()*Math.PI*2,
+      twinkleSpeed: 0.0015 + Math.random()*0.002
+    });
+  }
+}
+
+const BEST_KEY = 'pureheart-best';
+const PROGRESS_KEY = 'pureheart-progress';
+
+// Storage abstraction: prefers Claude's own storage (works in this chat's
+// preview), falls back to the browser's localStorage (works once hosted,
+// e.g. on GitHub Pages).
+function hasClaudeStorage(){
+  return !!(window.storage && typeof window.storage.get === 'function' && typeof window.storage.set === 'function');
+}
+function hasLocalStorage(){
+  try{
+    const k = '__pureheart_test__';
+    localStorage.setItem(k, '1');
+    localStorage.removeItem(k);
+    return true;
+  } catch(e){ return false; }
+}
+const claudeStorageAvailable = hasClaudeStorage();
+const localStorageAvailable = hasLocalStorage();
+
+function storageGet(key){
+  if (claudeStorageAvailable){
+    return window.storage.get(key, false)
+      .then(r => r ? r.value : null)
+      .catch(()=> localStorageAvailable ? safeLocalGet(key) : null);
+  }
+  return Promise.resolve(localStorageAvailable ? safeLocalGet(key) : null);
+}
+function storageSet(key, value){
+  if (claudeStorageAvailable){
+    return window.storage.set(key, value, false).catch(()=>{
+      if (localStorageAvailable) safeLocalSet(key, value);
+    });
+  }
+  if (localStorageAvailable) safeLocalSet(key, value);
+  return Promise.resolve();
+}
+function storageRemove(key){
+  if (claudeStorageAvailable && typeof window.storage.delete === 'function'){
+    return window.storage.delete(key, false).catch(()=>{
+      if (localStorageAvailable) safeLocalRemove(key);
+    });
+  }
+  if (localStorageAvailable) safeLocalRemove(key);
+  return Promise.resolve();
+}
+function safeLocalGet(key){ try{ return localStorage.getItem(key); } catch(e){ return null; } }
+function safeLocalSet(key, value){ try{ localStorage.setItem(key, value); } catch(e){ /* ignore */ } }
+function safeLocalRemove(key){ try{ localStorage.removeItem(key); } catch(e){ /* ignore */ } }
+
+function loadBest(){
+  best = 0;
+  storageGet(BEST_KEY).then(raw => { best = raw ? parseInt(raw) || 0 : 0; });
+}
+function saveBest(){
+  storageSet(BEST_KEY, String(best));
+}
+
+function saveProgress(){
+  storageSet(PROGRESS_KEY, JSON.stringify({ score, levelIndex }));
+}
+function parseProgress(raw){
+  if (!raw) return null;
+  try{
+    const data = JSON.parse(raw);
+    if (typeof data.score === 'number' && typeof data.levelIndex === 'number') return data;
+  } catch(e){ /* ignore */ }
+  return null;
+}
+function clearProgress(){
+  storageRemove(PROGRESS_KEY);
+  savedProgressData = null;
+}
+
+resetGame();
+initClouds();
+initStars();
+best = 0;
+loadBest();
+
+let savedProgressData = null;
+storageGet(PROGRESS_KEY).then(raw => {
+  const saved = parseProgress(raw);
+  if (saved && saved.score > 0){
+    savedProgressData = saved;
+    continueBtn.textContent = `↻ Continue (Score ${saved.score})`;
+    continueBtn.classList.remove('hidden');
+  }
+});
+
+continueBtn.addEventListener('click', ()=>{
+  ensureAudio();
+  const saved = savedProgressData;
+  resetGame();
+  if (saved){
+    score = saved.score;
+    levelIndex = saved.levelIndex;
+    pipeSpeed = levelSpeed(levelIndex);
+    currentGap = levelGap(levelIndex);
+  }
+  startOverlay.classList.add('hidden');
+  state = 'continue';
+  requestAnimationFrame(loop);
+});
+
+window.addEventListener('pagehide', ()=>{
+  if (state === 'playing' || state === 'wounded' || state === 'continue' || state === 'levelup' || state === 'grace' || state === 'charity' || state === 'missed'){
+    saveProgress();
+  }
+});
+document.addEventListener('visibilitychange', ()=>{
+  if (document.hidden && (state === 'playing' || state === 'wounded' || state === 'continue' || state === 'levelup' || state === 'grace' || state === 'charity' || state === 'missed')){
+    saveProgress();
+  }
+});
+
+function drawHeartShape(x, y, r, sick){
+  drawWings(x, y, r, sick);
+
+  const wobble = sick ? Math.sin(Date.now()/90) * 0.12 : 0;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(heart.rot + wobble);
+  ctx.beginPath();
+  const topCurveHeight = r * 0.3;
+  ctx.moveTo(0, topCurveHeight);
+  ctx.bezierCurveTo(-r, -topCurveHeight*1.2, -r*1.4, r*0.5, 0, r*1.3);
+  ctx.bezierCurveTo(r*1.4, r*0.5, r, -topCurveHeight*1.2, 0, topCurveHeight);
+  ctx.closePath();
+  ctx.fillStyle = sick ? '#2A2530' : '#FF4F6D';
+  ctx.shadowColor = sick ? 'rgba(60,60,70,0.6)' : 'rgba(255,79,109,0.6)';
+  ctx.shadowBlur = 14;
+  ctx.fill();
+  ctx.restore();
+
+  drawHalo(x, y, r, !sick);
+
+  if (sick){
+    ctx.font = '18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🤢', x + 20, y - 14);
+  }
+}
+
+function drawWings(x, y, r, broken){
+  const flap = Math.sin(Date.now()/110) * 0.35;
+  const wingColor = GROWTH_COLORS[Math.min(levelIndex, GROWTH_COLORS.length-1)];
+  ctx.save();
+  ctx.translate(x, y);
+
+  // left wing
+  ctx.save();
+  ctx.rotate(broken ? 1.0 : (-0.25 + flap));
+  ctx.beginPath();
+  ctx.ellipse(-r*1.2, broken ? r*0.6 : -r*0.1, r*0.95, r*0.42, 0, 0, Math.PI*2);
+  ctx.fillStyle = broken ? '#8A8A93' : wingColor;
+  ctx.globalAlpha = broken ? 0.7 : 0.95;
+  ctx.shadowColor = broken ? 'transparent' : 'rgba(255,255,255,0.8)';
+  ctx.shadowBlur = broken ? 0 : (8 + levelIndex*3);
+  ctx.fill();
+  ctx.restore();
+
+  // right wing (mirrored)
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.rotate(broken ? 1.0 : (-0.25 + flap));
+  ctx.beginPath();
+  ctx.ellipse(-r*1.2, broken ? r*0.6 : -r*0.1, r*0.95, r*0.42, 0, 0, Math.PI*2);
+  ctx.fillStyle = broken ? '#8A8A93' : wingColor;
+  ctx.globalAlpha = broken ? 0.7 : 0.95;
+  ctx.shadowColor = broken ? 'transparent' : 'rgba(255,255,255,0.8)';
+  ctx.shadowBlur = broken ? 0 : (8 + levelIndex*3);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawHalo(x, y, r, visible){
+  if (!visible) return;
+  const pulse = 1 + Math.sin(Date.now()/260) * 0.06;
+  const scale = 1 + levelIndex * 0.12;
+  ctx.save();
+  ctx.translate(x, y - r*1.9);
+  ctx.scale(pulse * scale, pulse * scale * 0.4);
+  ctx.beginPath();
+  ctx.arc(0, 0, r*0.85, 0, Math.PI*2);
+  ctx.strokeStyle = '#FFD873';
+  ctx.lineWidth = 4;
+  ctx.shadowColor = 'rgba(255,216,115,0.9)';
+  ctx.shadowBlur = 12 + levelIndex*4;
+  ctx.stroke();
+  // extra outer ring appears from Level 3 onward — a visible sign of growth
+  if (levelIndex >= 2){
+    ctx.beginPath();
+    ctx.arc(0, 0, r*1.25, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,216,115,0.5)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawConfession(){
+  if (!confessionSpot) return;
+  const pulse = 1 + Math.sin(Date.now()/200) * 0.08;
+  ctx.save();
+  ctx.translate(confessionSpot.x, confessionSpot.y);
+  ctx.scale(pulse, pulse);
+  ctx.beginPath();
+  ctx.arc(0, 0, CONFESSION_R, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,201,60,0.35)';
+  ctx.shadowColor = 'rgba(255,201,60,0.9)';
+  ctx.shadowBlur = 20;
+  ctx.fill();
+  ctx.font = '28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✝️', 0, 2);
+  ctx.restore();
+
+  ctx.font = "700 12px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#3A2141';
+  ctx.textAlign = 'center';
+  ctx.fillText('Confession', confessionSpot.x, confessionSpot.y + CONFESSION_R + 16);
+}
+
+function drawCharityTarget(){
+  if (!charityTarget) return;
+  const blink = 0.55 + 0.45*Math.sin(Date.now()/140);
+  const pulse = 1 + Math.sin(Date.now()/140) * 0.18;
+
+  // outer blinking ring to catch the eye
+  ctx.save();
+  ctx.translate(charityTarget.x, charityTarget.y);
+  ctx.globalAlpha = blink * 0.55;
+  ctx.beginPath();
+  ctx.arc(0, 0, (CHARITY_R+14) * pulse, 0, Math.PI*2);
+  ctx.strokeStyle = '#FFD873';
+  ctx.lineWidth = 5;
+  ctx.shadowColor = 'rgba(255,216,115,1)';
+  ctx.shadowBlur = 26;
+  ctx.stroke();
+  ctx.restore();
+
+  // main glowing circle
+  ctx.save();
+  ctx.translate(charityTarget.x, charityTarget.y);
+  ctx.scale(pulse, pulse);
+  ctx.beginPath();
+  ctx.arc(0, 0, CHARITY_R, 0, Math.PI*2);
+  ctx.fillStyle = `rgba(255,216,115,${0.55 + blink*0.25})`;
+  ctx.shadowColor = 'rgba(255,216,115,1)';
+  ctx.shadowBlur = 24;
+  ctx.fill();
+  ctx.font = '38px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(charityTarget.item.icon, 0, 3);
+  ctx.restore();
+
+  // "Help!" callout above
+  ctx.save();
+  ctx.globalAlpha = blink;
+  ctx.font = "700 15px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#FFD873';
+  ctx.strokeStyle = 'rgba(58,33,65,0.9)';
+  ctx.lineWidth = 3.5;
+  ctx.textAlign = 'center';
+  ctx.strokeText('✨ Help! ✨', charityTarget.x, charityTarget.y - CHARITY_R - 24);
+  ctx.fillText('✨ Help! ✨', charityTarget.x, charityTarget.y - CHARITY_R - 24);
+  ctx.restore();
+
+  ctx.font = "700 13px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#3A2141';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(charityTarget.item.label, charityTarget.x, charityTarget.y + CHARITY_R + 20);
+}
+
+function drawCharityPrompt(){
+  if (state !== 'charity') return;
+  const pulse = 1 + Math.sin(Date.now()/220) * 0.06;
+  ctx.save();
+  ctx.fillStyle = 'rgba(30,25,10,0.55)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.translate(W/2, H/2 - 60);
+  ctx.scale(pulse, pulse);
+  ctx.font = '46px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(charityToast.item.icon, 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(W/2, H/2 + 10);
+  ctx.font = "700 16px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#FFD873';
+  ctx.strokeStyle = 'rgba(75,46,86,0.9)';
+  ctx.lineWidth = 4;
+  ctx.textAlign = 'center';
+  ctx.strokeText('You Helped! 💗', 0, 0);
+  ctx.fillText('You Helped! 💗', 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(W/2, H/2 + 40);
+  ctx.font = "600 14px 'Nunito', sans-serif";
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = 'rgba(75,46,86,0.85)';
+  ctx.lineWidth = 3;
+  ctx.textAlign = 'center';
+  const wrapped = wrapText(charityToast.item.msg, W - 90);
+  wrapped.forEach((line, i)=>{
+    const y = i*20;
+    ctx.strokeText(line, 0, y);
+    ctx.fillText(line, 0, y);
+  });
+  ctx.font = "700 15px 'Fredoka', sans-serif";
+  const tapY = wrapped.length*20 + 26;
+  ctx.strokeText('Tap to keep flying!', 0, tapY);
+  ctx.fillText('Tap to keep flying!', 0, tapY);
+  ctx.restore();
+}
+
+function roundRectPath(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function drawWoundBanner(){
+  if (state !== 'wounded') return;
+  const remaining = Math.max(0, woundEndTime - Date.now());
+  const pct = remaining / WOUND_DURATION;
+
+  ctx.font = "700 14px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = 'rgba(75,46,86,0.7)';
+  ctx.lineWidth = 3;
+  ctx.textAlign = 'center';
+  ctx.strokeText('Drag the heart to confession!', W/2, 96);
+  ctx.fillText('Drag the heart to confession!', W/2, 96);
+
+  const barW = W - 80;
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillRect(40, 106, barW, 8);
+  ctx.fillStyle = pct > 0.3 ? '#FFC93C' : '#FF4F6D';
+  ctx.fillRect(40, 106, barW * pct, 8);
+}
+
+function drawContinuePrompt(){
+  if (state !== 'continue') return;
+  const pulse = 1 + Math.sin(Date.now()/220) * 0.06;
+  ctx.save();
+  ctx.fillStyle = 'rgba(30,15,45,0.35)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.translate(W/2, H/2 - 20);
+  ctx.scale(pulse, pulse);
+  ctx.font = "700 20px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = 'rgba(75,46,86,0.8)';
+  ctx.lineWidth = 4;
+  ctx.textAlign = 'center';
+  ctx.strokeText('You are forgiven! 🙌', 0, 0);
+  ctx.fillText('You are forgiven! 🙌', 0, 0);
+  ctx.font = "600 15px 'Fredoka', sans-serif";
+  ctx.strokeText('Tap to continue flying', 0, 32);
+  ctx.fillText('Tap to continue flying', 0, 32);
+  ctx.restore();
+}
+
+function drawMissedPrompt(){
+  if (state !== 'missed') return;
+  const pulse = 1 + Math.sin(Date.now()/220) * 0.06;
+  ctx.save();
+  ctx.fillStyle = 'rgba(45,15,25,0.5)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.translate(W/2, H/2 - 20);
+  ctx.scale(pulse, pulse);
+  ctx.font = "700 19px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#FFB3B3';
+  ctx.strokeStyle = 'rgba(75,46,86,0.85)';
+  ctx.lineWidth = 4;
+  ctx.textAlign = 'center';
+  ctx.strokeText('Too slow to confess... -5 points', 0, 0);
+  ctx.fillText('Too slow to confess... -5 points', 0, 0);
+  ctx.font = "600 14px 'Nunito', sans-serif";
+  ctx.strokeText("Don't give up — try again!", 0, 26);
+  ctx.fillText("Don't give up — try again!", 0, 26);
+  ctx.font = "700 15px 'Fredoka', sans-serif";
+  ctx.strokeText('Tap to keep flying', 0, 54);
+  ctx.fillText('Tap to keep flying', 0, 54);
+  ctx.restore();
+}
+
+function drawGraceBadge(){
+  if (state !== 'playing' || !heart.graceAvailable) return;
+  const pulse = 1 + Math.sin(Date.now()/200) * 0.08;
+  ctx.save();
+  ctx.translate(48, 30);
+  ctx.scale(pulse, pulse);
+  ctx.font = "700 11px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#FFD873';
+  ctx.strokeStyle = 'rgba(75,46,86,0.8)';
+  ctx.lineWidth = 3;
+  ctx.textAlign = 'center';
+  ctx.strokeText('✨ Grace ready', 0, 0);
+  ctx.fillText('✨ Grace ready', 0, 0);
+  ctx.restore();
+}
+
+function drawGracePrompt(){
+  if (state !== 'grace') return;
+  const pulse = 1 + Math.sin(Date.now()/220) * 0.06;
+  ctx.save();
+  ctx.fillStyle = 'rgba(30,25,10,0.55)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.translate(W/2, H/2 - 70);
+  ctx.scale(pulse, pulse);
+  ctx.font = "700 24px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#FFD873';
+  ctx.strokeStyle = 'rgba(75,46,86,0.9)';
+  ctx.lineWidth = 4;
+  ctx.textAlign = 'center';
+  ctx.strokeText('✨ That was Grace! ✨', 0, 0);
+  ctx.fillText('✨ That was Grace! ✨', 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(W/2, H/2 - 20);
+  ctx.font = "600 14px 'Nunito', sans-serif";
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = 'rgba(75,46,86,0.85)';
+  ctx.lineWidth = 3;
+  ctx.textAlign = 'center';
+
+  const reasonLine = graceSinLabel
+    ? `God protected you right before ${graceSinLabel}!`
+    : `God caught you before you fell!`;
+
+  const lines = [
+    reasonLine,
+    'Grace is God helping us',
+    'even when we don\u2019t ask —',
+    'because He loves you so much.',
+    '',
+    'Tap to keep flying!'
+  ];
+  lines.forEach((line, i)=>{
+    if (!line) return;
+    const y = i*20;
+    ctx.strokeText(line, 0, y);
+    ctx.fillText(line, 0, y);
+  });
+  ctx.restore();
+}
+
+function wrapText(text, maxWidth){
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  words.forEach(word=>{
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+function drawLevelUpPrompt(){
+  if (state !== 'levelup') return;
+  const pulse = 1 + Math.sin(Date.now()/220) * 0.06;
+  ctx.save();
+  ctx.fillStyle = 'rgba(30,15,45,0.55)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.translate(W/2, H/2 - 70);
+  ctx.scale(pulse, pulse);
+  ctx.font = "700 24px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#FFD873';
+  ctx.strokeStyle = 'rgba(75,46,86,0.9)';
+  ctx.lineWidth = 4;
+  ctx.textAlign = 'center';
+  ctx.strokeText('🎉 ' + levelName(levelIndex) + ' Unlocked!', 0, 0);
+  ctx.fillText('🎉 ' + levelName(levelIndex) + ' Unlocked!', 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(W/2, H/2 - 15);
+  ctx.font = "600 14px 'Nunito', sans-serif";
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = 'rgba(75,46,86,0.8)';
+  ctx.lineWidth = 3;
+  ctx.textAlign = 'center';
+
+  const newSins = newSinsForLevel(levelIndex);
+  const paragraph = newSins.length
+    ? `Great job staying pure! 💗 Now watch out for: ${newSins.map(s => s.label).join(', ')}.`
+    : `Great job staying pure! 💗 You know every temptation now — it's just faster and trickier from here!`;
+  const wrapped = wrapText(paragraph, W - 90);
+
+  wrapped.forEach((line, i)=>{
+    const y = i*20;
+    ctx.strokeText(line, 0, y);
+    ctx.fillText(line, 0, y);
+  });
+
+  ctx.font = "700 15px 'Fredoka', sans-serif";
+  const tapY = wrapped.length*20 + 26;
+  ctx.strokeText('✨ Your halo shines brighter! Tap to continue', 0, tapY);
+  ctx.fillText('✨ Your halo shines brighter! Tap to continue', 0, tapY);
+  ctx.restore();
+}
+
+const BG_THEMES = [
+  { colors: ['#8ED8F8', '#B3E8FB', '#EAF7FF'], stars: 0 },    // clear blue day
+  { colors: ['#FFB86B', '#FFD9A0', '#FFF3D6'], stars: 0 },    // golden sunset
+  { colors: ['#8FD9C9', '#BDEBD9', '#F2FFF6'], stars: 0 },    // fresh morning
+  { colors: ['#8C7BC2', '#B39FDD', '#F0E6FA'], stars: 0.35 }, // dusk lavender, stars starting to peek
+  { colors: ['#2E2F6B', '#4A4B94', '#8083C2'], stars: 1 },    // night sky
+  { colors: ['#6FB8D9', '#A6DCC9', '#FFFDE8'], stars: 0 }     // warm afternoon
+];
+const BG_CYCLE_MS = 26000; // time to drift fully from one mood to the next
+
+function lerpColor(hexA, hexB, t){
+  const a = parseInt(hexA.slice(1), 16);
+  const b = parseInt(hexB.slice(1), 16);
+  const ar = (a>>16)&255, ag = (a>>8)&255, ab = a&255;
+  const br = (b>>16)&255, bg = (b>>8)&255, bb = b&255;
+  const r = Math.round(ar + (br-ar)*t);
+  const g = Math.round(ag + (bg-ag)*t);
+  const bl = Math.round(ab + (bb-ab)*t);
+  return `rgb(${r},${g},${bl})`;
+}
+
+function computeSkyBlend(){
+  const pos = (Date.now() % (BG_CYCLE_MS * BG_THEMES.length)) / BG_CYCLE_MS;
+  const idx = Math.floor(pos) % BG_THEMES.length;
+  const nextIdx = (idx + 1) % BG_THEMES.length;
+  const t = pos - Math.floor(pos);
+  const themeA = BG_THEMES[idx];
+  const themeB = BG_THEMES[nextIdx];
+  const starOpacity = themeA.stars + (themeB.stars - themeA.stars) * t;
+  return { themeA, themeB, t, starOpacity };
+}
+
+function drawBackground(){
+  const { themeA, themeB, t, starOpacity } = computeSkyBlend();
+
+  const top = lerpColor(themeA.colors[0], themeB.colors[0], t);
+  const mid = lerpColor(themeA.colors[1], themeB.colors[1], t);
+  const bottom = lerpColor(themeA.colors[2], themeB.colors[2], t);
+
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, top);
+  g.addColorStop(0.5, mid);
+  g.addColorStop(1, bottom);
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  if (starOpacity > 0.01){
+    const now = Date.now();
+    stars.forEach(s=>{
+      const twinkle = 0.5 + 0.5*Math.sin(now*s.twinkleSpeed + s.twinklePhase);
+      ctx.globalAlpha = starOpacity * (0.4 + 0.6*twinkle);
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = '#FFFDE8';
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  clouds.forEach(c=>{
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y, 28*c.s, 14*c.s, 0, 0, Math.PI*2);
+    ctx.ellipse(c.x+20*c.s, c.y+6*c.s, 20*c.s, 12*c.s, 0, 0, Math.PI*2);
+    ctx.ellipse(c.x-20*c.s, c.y+6*c.s, 18*c.s, 10*c.s, 0, 0, Math.PI*2);
+    ctx.fill();
+  });
+}
+
+function drawGround(){
+  ctx.fillStyle = '#6BBF59';
+  ctx.fillRect(0, H-28, W, 6);
+  ctx.fillStyle = '#8B5E3C';
+  ctx.fillRect(0, H-22, W, 22);
+}
+
+function plantRose(){
+  let x, tries = 0;
+  do {
+    x = 30 + Math.random() * (W - 60);
+    tries++;
+  } while (roses.some(r => Math.abs(r.x - x) < 26) && tries < 10);
+
+  roses.push({
+    x,
+    color: ROSE_COLORS[Math.floor(Math.random()*ROSE_COLORS.length)],
+    stemH: 30 + Math.random()*24,
+    bloomR: 9 + Math.random()*4,
+    sparklePhase: Math.random()*Math.PI*2
+  });
+}
+
+function drawRoses(){
+  const groundY = H - 28;
+  roses.forEach(r=>{
+    const topY = groundY - r.stemH;
+
+    // long curved stem
+    ctx.save();
+    ctx.strokeStyle = '#2E7D32';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(r.x, groundY);
+    ctx.quadraticCurveTo(r.x + 5, groundY - r.stemH*0.5, r.x, topY);
+    ctx.stroke();
+    ctx.restore();
+
+    // glowing, shining bloom
+    const twinkle = 0.5 + 0.5*Math.sin(Date.now()/260 + r.sparklePhase);
+    ctx.save();
+    ctx.translate(r.x, topY);
+    ctx.shadowColor = r.color;
+    ctx.shadowBlur = 12 + 10*twinkle;
+    const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, r.bloomR);
+    grad.addColorStop(0, '#FFFFFF');
+    grad.addColorStop(0.35, r.color);
+    grad.addColorStop(1, r.color);
+    ctx.beginPath();
+    ctx.arc(0, 0, r.bloomR, 0, Math.PI*2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // sparkle cross
+    ctx.globalAlpha = 0.4 + 0.5*twinkle;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-r.bloomR*1.6, 0); ctx.lineTo(r.bloomR*1.6, 0);
+    ctx.moveTo(0, -r.bloomR*1.6); ctx.lineTo(0, r.bloomR*1.6);
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function drawRainbow(){
+  if (!rainbow.active) return;
+  const age = Date.now() - rainbow.startedAt;
+  const fadeInEnd = rainbow.duration * 0.15;
+  const fadeOutStart = rainbow.duration * 0.7;
+  let alpha = 1;
+  if (age < fadeInEnd) alpha = age / fadeInEnd;
+  else if (age > fadeOutStart) alpha = Math.max(0, 1 - (age - fadeOutStart) / (rainbow.duration - fadeOutStart));
+
+  const bandColors = ['#FF3B3B', '#FF9D3B', '#FFE93B', '#3BFF6E', '#3BB8FF', '#8C3BFF'];
+  const cx = W/2, cy = H*0.58, baseR = W*0.68;
+
+  ctx.save();
+  ctx.globalAlpha = alpha * 0.75;
+  bandColors.forEach((c, i)=>{
+    ctx.beginPath();
+    ctx.arc(cx, cy, baseR - i*9, Math.PI, Math.PI*2);
+    ctx.strokeStyle = c;
+    ctx.lineWidth = 8;
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawAngels(){
+  angels.forEach(a=>{
+    const bob = Math.sin(Date.now()/500 + a.bobPhase) * 6;
+    ctx.save();
+    ctx.font = '30px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255,255,255,0.95)';
+    ctx.shadowBlur = 16;
+    ctx.fillText('👼', a.x, a.y + bob);
+    ctx.restore();
+  });
+}
+
+function drawScorePopups(){
+  scorePopups.forEach(p=>{
+    const age = Date.now() - p.bornAt;
+    const progress = Math.min(1, age / 900);
+    const rise = progress * 30;
+    const alpha = 1 - progress;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = 'center';
+    if (p.bonus){
+      ctx.font = "800 20px 'Fredoka', sans-serif";
+      ctx.fillStyle = '#FFD873';
+      ctx.strokeStyle = 'rgba(75,46,86,0.9)';
+      ctx.lineWidth = 3.5;
+      ctx.strokeText(p.text, p.x, p.y - rise);
+      ctx.fillText(p.text, p.x, p.y - rise);
+    } else {
+      ctx.font = "700 14px 'Fredoka', sans-serif";
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = 'rgba(75,46,86,0.8)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeText(p.text, p.x, p.y - rise);
+      ctx.fillText(p.text, p.x, p.y - rise);
+    }
+    ctx.restore();
+  });
+}
+
+const PILLAR_COLORS = [
+  { main: '#3D5A3E', cap: '#22301F' }, // dark vine green
+  { main: '#5B2E3A', cap: '#2E1218' }, // blood-thorn red
+  { main: '#4A3524', cap: '#241A0F' }, // bramble brown
+  { main: '#3A4A2E', cap: '#1E2717' }, // olive vine
+  { main: '#4B2E3A', cap: '#28151C' }, // dark rose vine
+  { main: '#2E3B2E', cap: '#161F16' }, // deep forest
+  { main: '#4A2E2E', cap: '#251616' }  // dried-blood brown
+];
+
+function spawnPillar(){
+  const gapY = 90 + Math.random()*(H - 28 - currentGap - 90);
+  const sinPool = sinsForLevel(levelIndex);
+  const sin = sinPool[Math.floor(Math.random()*sinPool.length)];
+  const colors = PILLAR_COLORS[Math.floor(Math.random()*PILLAR_COLORS.length)];
+  pillars.push({ x: W + PIPE_W, gapY, gap: currentGap, passed:false, sin, colors });
+}
+
+function spawnCharity(){
+  const item = CHARITY_ITEMS[Math.floor(Math.random()*CHARITY_ITEMS.length)];
+  charityTarget = {
+    x: W + 40,
+    y: 90 + Math.random()*(H - 28 - 180),
+    vx: Math.max(pipeSpeed * 0.55, 1.2),
+    item,
+    bornAt: Date.now()
+  };
+}
+
+function drawThornBranch(x, y, w, h, colors, facingGap){
+  if (h <= 0) return;
+  const trunkW = w * 0.42;
+  const trunkX = x + (w - trunkW) / 2;
+
+  // vine trunk
+  ctx.fillStyle = colors.main;
+  ctx.beginPath();
+  ctx.moveTo(trunkX + 4, y);
+  ctx.lineTo(trunkX + trunkW - 4, y);
+  ctx.quadraticCurveTo(trunkX + trunkW, y, trunkX + trunkW, y + 4);
+  ctx.lineTo(trunkX + trunkW, y + h - 4);
+  ctx.quadraticCurveTo(trunkX + trunkW, y + h, trunkX + trunkW - 4, y + h);
+  ctx.lineTo(trunkX + 4, y + h);
+  ctx.quadraticCurveTo(trunkX, y + h, trunkX, y + h - 4);
+  ctx.lineTo(trunkX, y + 4);
+  ctx.quadraticCurveTo(trunkX, y, trunkX + 4, y);
+  ctx.closePath();
+  ctx.fill();
+
+  // alternating thorn spikes along the trunk
+  ctx.fillStyle = colors.cap;
+  const spacing = 24;
+  const count = Math.floor(h / spacing);
+  for (let i = 0; i < count; i++){
+    const ty = y + i*spacing + spacing/2;
+    const side = i % 2 === 0 ? -1 : 1;
+    const trunkEdge = side < 0 ? trunkX : trunkX + trunkW;
+    const tipX = trunkEdge + side * (w * 0.36);
+    ctx.beginPath();
+    ctx.moveTo(trunkEdge, ty - 6);
+    ctx.lineTo(tipX, ty);
+    ctx.lineTo(trunkEdge, ty + 6);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // cluster of larger thorns pointing toward the gap
+  const capY = facingGap ? y + h : y;
+  const dir = facingGap ? 1 : -1;
+  for (let j = -1; j <= 1; j++){
+    const tx = x + w/2 + j*13;
+    ctx.beginPath();
+    ctx.moveTo(tx - 7, capY);
+    ctx.lineTo(tx, capY + dir*18);
+    ctx.lineTo(tx + 7, capY);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawPillar(p){
+  const topH = p.gapY;
+  const botY = p.gapY + p.gap;
+  const botH = H - botY - 28;
+
+  drawThornBranch(p.x, 0, PIPE_W, topH, p.colors, true);
+  drawThornBranch(p.x, botY, PIPE_W, botH, p.colors, false);
+
+  // sin icon
+  ctx.font = '28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(p.sin.icon, p.x + PIPE_W/2, p.gapY - 36);
+
+  // sin label
+  ctx.font = "800 16px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = 'rgba(59,33,65,0.95)';
+  ctx.lineWidth = 4;
+  const labelText = p.sin.label.toUpperCase();
+  ctx.strokeText(labelText, p.x + PIPE_W/2, p.gapY - 8);
+  ctx.fillText(labelText, p.x + PIPE_W/2, p.gapY - 8);
+}
+
+function update(){
+  clouds.forEach(c=>{ c.x -= c.speed; if (c.x < -40) c.x = W+40; });
+
+  // rainbow: only tries to appear once the garden is crowded, and never at night
+  if (rainbow.active && Date.now() - rainbow.startedAt > rainbow.duration){
+    rainbow.active = false;
+  }
+  if (!rainbow.active && Date.now() >= nextRainbowCheck){
+    if (roses.length >= ROSE_CROWD_THRESHOLD){
+      const sky = computeSkyBlend();
+      if (sky.starOpacity < 0.4 && Math.random() < 0.5){
+        rainbow = { active: true, startedAt: Date.now(), duration: 15000 };
+      }
+    }
+    nextRainbowCheck = Date.now() + rainbowIntervalForLevel(levelIndex);
+  }
+
+  // angels: occasional decorative flyby, any time of day or night
+  if (Date.now() >= nextAngelCheck){
+    if (Math.random() < 0.4){
+      angels.push({
+        x: -40,
+        y: 50 + Math.random()*150,
+        speed: 0.7 + Math.random()*0.5,
+        bobPhase: Math.random()*Math.PI*2
+      });
+    }
+    nextAngelCheck = Date.now() + angelIntervalForLevel(levelIndex);
+  }
+  angels.forEach(a=>{ a.x += a.speed; });
+  angels = angels.filter(a => a.x < W + 60);
+  scorePopups = scorePopups.filter(p => Date.now() - p.bornAt < 900);
+
+  if (state === 'playing'){
+    frame++;
+    const slow = charityTarget ? 0.3 : 1;
+
+    if (charityTarget){
+      // drag-controlled charity window: gravity paused, everything slowed,
+      // no sin collisions — full focus on reaching the person in need
+      heart.vy = 0;
+      heart.rot = 0;
+    } else {
+      heart.vy += GRAVITY;
+      heart.y += heart.vy;
+      heart.rot = Math.max(-0.5, Math.min(1.0, heart.vy/12));
+    }
+
+    if (!charityTarget && frame % SPAWN_EVERY === 0) spawnPillar();
+
+    pillars.forEach(p => p.x -= pipeSpeed * slow);
+    pillars = pillars.filter(p => p.x > -PIPE_W - 10);
+
+    if (!charityTarget){
+      let hitPillar = null;
+      let hitGround = false;
+      pillars.forEach(p=>{
+        if (!p.passed && p.x + PIPE_W < heart.x - heart.r){
+          p.passed = true;
+          const isBonus = Math.random() < bonusScoreChance(levelIndex);
+          const gained = isBonus ? 5 : 1;
+          score += gained;
+          scorePopups.push({ x: p.x + PIPE_W/2, y: p.gapY, text: `+${gained}`, bonus: isBonus, bornAt: Date.now() });
+          if (isBonus) playBonusScore(); else playScore();
+          saveProgress();
+        }
+        const withinX = heart.x + heart.r > p.x && heart.x - heart.r < p.x + PIPE_W;
+        const hitTop = heart.y - heart.r < p.gapY;
+        const hitBottom = heart.y + heart.r > p.gapY + p.gap;
+        if (withinX && (hitTop || hitBottom)) hitPillar = p;
+      });
+
+      if (heart.y + heart.r > H - 28) { heart.y = H - 28 - heart.r; hitGround = true; }
+      if (heart.y - heart.r < 0) { heart.y = heart.r; heart.vy = 0; }
+
+      if (hitPillar || hitGround){
+        if (heart.graceAvailable){
+          heart.graceAvailable = false;
+          enterGrace(hitPillar ? hitPillar.sin.label : null);
+        } else {
+          playHit();
+          enterWounded();
+        }
+      }
+      else if (score >= levelThreshold(levelIndex+1)){
+        enterLevelUp();
+      }
+    }
+
+    // charity opportunities — appear periodically; drag TOWARD them to help
+    if (!charityTarget && score >= nextCharityScore){
+      spawnCharity();
+      nextCharityScore += charityIntervalForLevel(levelIndex);
+    }
+    if (charityTarget){
+      charityTarget.x -= charityTarget.vx * slow;
+      const age = Date.now() - charityTarget.bornAt;
+      const dx = heart.x - charityTarget.x;
+      const dy = heart.y - charityTarget.y;
+      if (Math.sqrt(dx*dx + dy*dy) < heart.r + CHARITY_R){
+        playCharity();
+        score += 5;
+        saveProgress();
+        charityToast = { item: charityTarget.item };
+        charityTarget = null;
+        plantRose();
+        repositionToSafeSpot();
+        state = 'charity';
+      } else if (age > CHARITY_LIFESPAN || charityTarget.x < -60){
+        charityTarget = null;
+      }
+    }
+  }
+  else if (state === 'wounded'){
+    // pillars stay frozen so the player can focus on reaching confession
+    const remaining = woundEndTime - Date.now();
+    if (remaining <= 0){
+      missConfession();
+      return;
+    }
+    const dx = heart.x - confessionSpot.x;
+    const dy = heart.y - confessionSpot.y;
+    if (Math.sqrt(dx*dx + dy*dy) < CONFESSION_R){ playHeal(); healHeart(); }
+  }
+}
+
+function enterWounded(){
+  if (state !== 'playing') return;
+  state = 'wounded';
+  heart.sick = true;
+  heart.vy = 0;
+  woundEndTime = Date.now() + WOUND_DURATION;
+  confessionSpot = {
+    x: 50 + Math.random() * (W - 100),
+    y: 90 + Math.random() * (H - 28 - 180)
+  };
+}
+
+function enterLevelUp(){
+  levelIndex++;
+  pipeSpeed = levelSpeed(levelIndex);
+  currentGap = levelGap(levelIndex);
+  heart.vy = 0;
+  heart.rot = 0;
+  heart.graceAvailable = true;
+  playLevelUp();
+  state = 'levelup';
+  saveProgress();
+}
+
+function repositionToSafeSpot(){
+  heart.vy = 0;
+  heart.rot = 0;
+  heart.x = 90;
+  heart.y = H / 2;
+  // clear any pillars too close to the safe starting spot, and give breathing room to the rest
+  pillars = pillars.filter(p => p.x > 320);
+  pillars.forEach(p => p.x += 200);
+}
+
+function enterGrace(sinLabel){
+  graceSinLabel = sinLabel;
+  repositionToSafeSpot();
+  playGrace();
+  state = 'grace';
+}
+
+function healHeart(){
+  heart.sick = false;
+  repositionToSafeSpot();
+  confessionSpot = null;
+  state = 'continue';
+}
+
+function missConfession(){
+  score = Math.max(0, score - 5);
+  saveProgress();
+  playHit();
+  heart.sick = false;
+  confessionSpot = null;
+  repositionToSafeSpot();
+  state = 'missed';
+}
+
+function drawScore(){
+  ctx.font = "700 30px 'Fredoka', sans-serif";
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = 'rgba(75,46,86,0.6)';
+  ctx.lineWidth = 4;
+  ctx.textAlign = 'center';
+  ctx.strokeText(score, W/2, 60);
+  ctx.fillText(score, W/2, 60);
+
+  ctx.font = "700 12px 'Fredoka', sans-serif";
+  ctx.lineWidth = 3;
+  ctx.strokeText(levelName(levelIndex), W/2, 76);
+  ctx.fillText(levelName(levelIndex), W/2, 76);
+}
+
+function draw(){
+  drawBackground();
+  drawRainbow();
+  drawAngels();
+  pillars.forEach(drawPillar);
+  drawGround();
+  drawRoses();
+  drawConfession();
+  drawCharityTarget();
+  drawScorePopups();
+  drawHeartShape(heart.x, heart.y, heart.r, heart.sick);
+  drawScore();
+  drawGraceBadge();
+  drawWoundBanner();
+  drawContinuePrompt();
+  drawLevelUpPrompt();
+  drawGracePrompt();
+  drawMissedPrompt();
+  drawCharityPrompt();
+}
+
+function loop(){
+  if (!['playing','wounded','continue','levelup','grace','charity','missed'].includes(state)) return;
+  if (paused){ requestAnimationFrame(loop); return; }
+  update();
+  draw();
+  if (['playing','wounded','continue','levelup','grace','charity','missed'].includes(state)) requestAnimationFrame(loop);
+}
+
+function flap(){
+  ensureAudio();
+  if (state === 'over' || state === 'wounded') return;
+  if (state === 'start'){
+    startOverlay.classList.add('hidden');
+    state = 'playing';
+    requestAnimationFrame(loop);
+    playFlap();
+    heart.vy = FLAP;
+    return;
+  }
+  if (state === 'continue' || state === 'levelup' || state === 'grace' || state === 'charity' || state === 'missed'){
+    state = 'playing';
+  }
+  playFlap();
+  heart.vy = FLAP;
+}
+
+function pointerToCanvas(e){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = W / rect.width;
+  const scaleY = H / rect.height;
+  const point = e.touches ? e.touches[0] : e;
+  return {
+    x: (point.clientX - rect.left) * scaleX,
+    y: (point.clientY - rect.top) * scaleY
+  };
+}
+
+function handlePointerDown(e){
+  e.preventDefault();
+  if (state === 'wounded' || (state === 'playing' && charityTarget)){
+    isPointerDown = true;
+    const pos = pointerToCanvas(e);
+    heart.x = Math.max(heart.r, Math.min(W - heart.r, pos.x));
+    heart.y = Math.max(heart.r, Math.min(H - 28 - heart.r, pos.y));
+  } else {
+    flap();
+  }
+}
+
+function handlePointerMove(e){
+  if (isPointerDown && (state === 'wounded' || (state === 'playing' && charityTarget))){
+    e.preventDefault();
+    const pos = pointerToCanvas(e);
+    heart.x = Math.max(heart.r, Math.min(W - heart.r, pos.x));
+    heart.y = Math.max(heart.r, Math.min(H - 28 - heart.r, pos.y));
+  }
+}
+
+function handlePointerUp(){
+  isPointerDown = false;
+}
+
+function endGame(){
+  if (state === 'over') return;
+  state = 'over';
+  heart.sick = false;
+  confessionSpot = null;
+  clearProgress();
+  if (score > best){
+    best = score;
+    saveBest();
+  }
+  finalScoreText.textContent = `You avoided ${score} sin${score===1?'':'s'}.`;
+  bestScoreText.textContent = `Best: ${best}`;
+  overOverlay.classList.remove('hidden');
+}
+
+function restart(){
+  overOverlay.classList.add('hidden');
+  continueBtn.classList.add('hidden');
+  resetGame();
+  draw();
+  state = 'playing';
+  requestAnimationFrame(loop);
+}
+
+startBtn.addEventListener('click', flap);
+retryBtn.addEventListener('click', restart);
+canvas.addEventListener('mousedown', handlePointerDown);
+canvas.addEventListener('touchstart', handlePointerDown, {passive:false});
+canvas.addEventListener('mousemove', handlePointerMove);
+canvas.addEventListener('touchmove', handlePointerMove, {passive:false});
+canvas.addEventListener('mouseup', handlePointerUp);
+canvas.addEventListener('touchend', handlePointerUp);
+document.addEventListener('keydown', (e)=>{
+  if (e.code === 'Space'){ e.preventDefault(); flap(); }
+});
+
+draw();
+</script>
+
+</body>
+</html>
