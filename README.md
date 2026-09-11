@@ -1,6 +1,6 @@
-# 💗 Flappy Heart — Avoid the Sins
+# 💗 Flappy Faith — Avoid the Sins
 
-A faith-based, Flappy Bird-style game made for kids. Guide a little heart with wings and a halo through the sky, dodging thorny temptations. Bump one, and the heart turns sick and loses its wings and halo — but there's always a second chance: drag it to **confession** before time runs out to be healed and keep flying.
+A faith-based, Flappy Bird-style game made for kids. Guide a little heart with wings and a halo through the sky, dodging thorny temptations. Every temptation dodged builds grace, which the heart uses to help souls in need along the way — and the more souls it helps, the brighter the world becomes and the more heaven rejoices! Bump one, and the heart turns sick and loses its wings and halo — but there's always a second chance: drag it to **confession** before time runs out to be healed and keep flying.
 
 *To God be the glory! – Maria Lea*
 
