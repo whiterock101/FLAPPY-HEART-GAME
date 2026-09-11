@@ -348,6 +348,22 @@ let currentGap = levelGap(0);
 let pipeSpeed = levelSpeed(0);
 let levelIndex = 0;
 
+// --- Level 500 walking scene ---
+const WALK_LEVEL_INDEX = 499; // levelName shows idx+1, so this is "Level 500"
+let walkMode = false;
+let walkPeople = [];
+let doves = [];
+let walkSpawnTimer = 90;
+let activePerson = null;
+let walkHelpedCount = 0;
+const WALK_SPEED = 1.6;
+const WALK_PEOPLE_TYPES = [
+  { emoji: '🧎', needText: 'is asking for food', giveEmoji: '🍞' },
+  { emoji: '🧍', needText: 'is asking for alms', giveEmoji: '🪙' },
+  { emoji: '👵', needText: 'needs help carrying groceries', giveEmoji: '🧺' },
+  { emoji: '👴', needText: 'needs help carrying a heavy bag', giveEmoji: '🎒' }
+];
+
 // wings/halo grow more radiant with each level — a visible sign of growth
 const GROWTH_COLORS = ['#FFFFFF', '#FFF3D0', '#FFD873', '#FFC93C'];
 
@@ -544,6 +560,11 @@ function resetGame(){
   angels = [];
   nextAngelCheck = Date.now() + ANGEL_CHECK_INTERVAL;
   scorePopups = [];
+  walkMode = false;
+  walkPeople = [];
+  doves = [];
+  walkSpawnTimer = 90;
+  activePerson = null;
   state = 'start';
 }
 
@@ -667,6 +688,11 @@ continueBtn.addEventListener('click', ()=>{
     levelIndex = saved.levelIndex;
     pipeSpeed = levelSpeed(levelIndex);
     currentGap = levelGap(levelIndex);
+    if (levelIndex >= WALK_LEVEL_INDEX){
+      walkMode = true;
+      heart.x = 90;
+      heart.y = H - 62;
+    }
   }
   startOverlay.classList.add('hidden');
   state = 'continue';
@@ -782,6 +808,144 @@ function drawHalo(x, y, r, visible){
     ctx.stroke();
   }
   ctx.restore();
+}
+
+function drawWalkFlame(x, y, r){
+  const bob = Math.sin(Date.now()/180) * 4;
+  const flicker = Math.sin(Date.now()/150) * 0.06;
+  const wingColor = GROWTH_COLORS[Math.min(levelIndex, GROWTH_COLORS.length-1)];
+
+  // lowered (resting) wings — folded down at the sides, not broken/gray
+  ctx.save();
+  ctx.translate(x, y + bob);
+  [1, -1].forEach(side=>{
+    ctx.save();
+    ctx.scale(side, 1);
+    ctx.rotate(0.95);
+    ctx.beginPath();
+    ctx.ellipse(-r*1.05, r*0.55, r*0.8, r*0.35, 0, 0, Math.PI*2);
+    ctx.fillStyle = wingColor;
+    ctx.globalAlpha = 0.85;
+    ctx.shadowColor = 'rgba(255,255,255,0.5)';
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.restore();
+  });
+  ctx.restore();
+
+  // flame body, same layered style as flight mode
+  ctx.save();
+  ctx.translate(x, y + bob);
+  drawFlameLayer(r * (1 + flicker), '#FF7043', 'rgba(255,112,67,0.6)');
+  drawFlameLayer(r * 0.68 * (1 + flicker), '#FFCA28', 'transparent');
+  drawFlameLayer(r * 0.4 * (1 + flicker), '#FFF176', 'transparent');
+  ctx.restore();
+
+  // halo stays lit — reaching Level 500 doesn't dim it
+  drawHalo(x, y + bob, r, true);
+}
+
+function drawStreetBackground(){
+  // simple building silhouettes behind the sidewalk, drawn after the sky
+  ctx.fillStyle = 'rgba(60,50,70,0.35)';
+  for (let i = 0; i < 6; i++){
+    const bw = 46;
+    const bx = ((i * 70) - (Date.now()/40 % 70));
+    const bh = 60 + (i % 3) * 30;
+    ctx.fillRect(bx, H - 28 - bh, bw, bh);
+  }
+  // sidewalk strip, replacing the grassy ground look for this scene
+  ctx.fillStyle = '#B9B4C2';
+  ctx.fillRect(0, H - 28, W, 6);
+  ctx.fillStyle = '#8A8496';
+  ctx.fillRect(0, H - 22, W, 22);
+}
+
+function spawnWalkPerson(){
+  const type = WALK_PEOPLE_TYPES[Math.floor(Math.random() * WALK_PEOPLE_TYPES.length)];
+  walkPeople.push({ ...type, x: W + 30, y: H - 62, helped: false });
+}
+
+function drawWalkPeople(){
+  walkPeople.forEach(p=>{
+    ctx.save();
+    ctx.font = '34px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.emoji, p.x, p.y);
+    ctx.restore();
+    if (p === activePerson){
+      ctx.save();
+      ctx.font = "700 13px 'Fredoka', sans-serif";
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = 'rgba(75,46,86,0.6)';
+      ctx.lineWidth = 3;
+      const label = `Tap to help — ${p.needText}`;
+      ctx.strokeText(label, p.x, p.y - 38);
+      ctx.fillText(label, p.x, p.y - 38);
+      ctx.restore();
+    }
+  });
+}
+
+function drawDoves(){
+  doves.forEach(d=>{
+    ctx.save();
+    ctx.font = '26px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.translate(d.x, d.y);
+    ctx.scale(-1, 1); // face the direction of travel
+    ctx.fillText('🕊️', 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.font = '14px sans-serif';
+    ctx.fillText('🌿', d.x - 14, d.y + 4);
+    ctx.restore();
+  });
+}
+
+function helpActivePerson(){
+  if (!activePerson) return;
+  activePerson.helped = true;
+  walkPeople = walkPeople.filter(p => p !== activePerson);
+  walkHelpedCount++;
+  score += 10;
+  saveProgress();
+  playCharity();
+  doves.push({
+    x: heart.x,
+    y: heart.y - 70,
+    vx: 3 + Math.random() * 1.4,
+    vy: -0.35 - Math.random() * 0.2,
+    bornAt: Date.now()
+  });
+  activePerson = null;
+}
+
+function updateWalkMode(){
+  frame++;
+
+  walkSpawnTimer--;
+  if (walkSpawnTimer <= 0 && walkPeople.length < 2){
+    spawnWalkPerson();
+    walkSpawnTimer = 130 + Math.floor(Math.random() * 110);
+  }
+
+  walkPeople.forEach(p => { if (!p.helped) p.x -= WALK_SPEED; });
+  walkPeople = walkPeople.filter(p => p.x > -50);
+
+  activePerson = null;
+  for (const p of walkPeople){
+    if (!p.helped && Math.abs(p.x - heart.x) < 34){
+      activePerson = p;
+      break;
+    }
+  }
+
+  doves.forEach(d=>{ d.x += d.vx; d.y += d.vy; });
+  doves = doves.filter(d => d.x < W + 60 && Date.now() - d.bornAt < 6000);
 }
 
 function drawConfession(){
@@ -1449,7 +1613,10 @@ function update(){
   angels = angels.filter(a => a.x < W + 60);
   scorePopups = scorePopups.filter(p => Date.now() - p.bornAt < 900);
 
-  if (state === 'playing'){
+  if (state === 'playing' && walkMode){
+    updateWalkMode();
+  }
+  else if (state === 'playing'){
     frame++;
     const slow = charityTarget ? 0.3 : 1;
 
@@ -1564,6 +1731,15 @@ function enterLevelUp(){
   playLevelUp();
   state = 'levelup';
   saveProgress();
+
+  if (!walkMode && levelIndex === WALK_LEVEL_INDEX){
+    walkMode = true;
+    pillars = [];
+    charityTarget = null;
+    heart.x = 90;
+    heart.y = H - 62;
+    heart.rot = 0;
+  }
 }
 
 function repositionToSafeSpot(){
@@ -1617,15 +1793,23 @@ function drawScore(){
 
 function draw(){
   drawBackground();
-  drawRainbow();
-  drawAngels();
-  pillars.forEach(drawPillar);
-  drawGround();
-  drawRoses();
-  drawConfession();
-  drawCharityTarget();
-  drawScorePopups();
-  drawHeartShape(heart.x, heart.y, heart.r, heart.sick);
+  if (walkMode){
+    drawStreetBackground();
+    drawRoses();
+    drawWalkPeople();
+    drawDoves();
+    drawWalkFlame(heart.x, heart.y, heart.r);
+  } else {
+    drawRainbow();
+    drawAngels();
+    pillars.forEach(drawPillar);
+    drawGround();
+    drawRoses();
+    drawConfession();
+    drawCharityTarget();
+    drawScorePopups();
+    drawHeartShape(heart.x, heart.y, heart.r, heart.sick);
+  }
   drawScore();
   drawGraceBadge();
   drawWoundBanner();
@@ -1652,7 +1836,18 @@ function flap(){
     state = 'playing';
     requestAnimationFrame(loop);
     playFlap();
-    heart.vy = FLAP;
+    if (new URLSearchParams(location.search).has('test500')){
+      levelIndex = WALK_LEVEL_INDEX;
+      score = levelThreshold(WALK_LEVEL_INDEX);
+      pipeSpeed = levelSpeed(levelIndex);
+      currentGap = levelGap(levelIndex);
+      walkMode = true;
+      heart.x = 90;
+      heart.y = H - 62;
+      heart.vy = 0;
+    } else {
+      heart.vy = FLAP;
+    }
     return;
   }
   if (state === 'continue' || state === 'levelup' || state === 'grace' || state === 'charity' || state === 'missed'){
@@ -1675,6 +1870,10 @@ function pointerToCanvas(e){
 
 function handlePointerDown(e){
   e.preventDefault();
+  if (state === 'playing' && walkMode){
+    helpActivePerson();
+    return;
+  }
   if (state === 'wounded' || (state === 'playing' && charityTarget)){
     isPointerDown = true;
     const pos = pointerToCanvas(e);
