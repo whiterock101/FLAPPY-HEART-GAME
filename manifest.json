@@ -2,14 +2,18 @@
   "id": "/FLAPPY-HEART-GAME/",
   "name": "Flappy Faith — Avoid the Sins",
   "short_name": "Flappy Faith",
-  "description": "A faith-based Flappy-Bird-style game for kids: guide a little heart past the seven deadly sins. Every sin avoided builds grace, which the heart uses to help more souls in need — and the more souls it helps, the brighter the world becomes and the more heaven rejoices! If it stumbles, rush to confession to be made clean again.",
+  "description": "A faith-based Flappy-Bird-style game for kids: guide a little flame past the seven deadly sins. Every sin avoided builds grace, which the flame uses to help more souls in need — and the more souls it helps, the brighter it burns.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FF4F6D",
   "theme_color": "#FF4F6D",
-  "categories": ["games", "education", "kids"],
+  "categories": [
+    "games",
+    "education",
+    "kids"
+  ],
   "icons": [
     {
       "src": "icon-192.png",
