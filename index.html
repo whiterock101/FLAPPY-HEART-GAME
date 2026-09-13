@@ -386,7 +386,7 @@ function angelIntervalForLevel(idx){ return Math.max(8000, ANGEL_CHECK_INTERVAL 
 const GRAVITY = 0.42;
 const FLAP = -7.6;
 const PIPE_W = 104;
-const SPAWN_EVERY = 160; // frames — more distance between pillars
+const SPAWN_EVERY = 175; // frames — a bit more room between pillars now that poles are thicker
 const WOUND_DURATION = 5000; // ms to reach confession
 const CONFESSION_R = 30;
 
@@ -1520,15 +1520,15 @@ function drawPillar(p){
   if (p.greaterTrial) ctx.restore();
 
   // sin icon
-  ctx.font = p.greaterTrial ? '34px sans-serif' : '28px sans-serif';
+  ctx.font = p.greaterTrial ? '38px sans-serif' : '32px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(p.sin.icon, p.x + PIPE_W/2, p.gapY - 36);
+  ctx.fillText(p.sin.icon, p.x + PIPE_W/2, p.gapY - 38);
 
   // sin label
-  ctx.font = "800 16px 'Fredoka', sans-serif";
+  ctx.font = "800 18px 'Fredoka', sans-serif";
   ctx.fillStyle = p.greaterTrial ? '#FFD4D4' : '#fff';
   ctx.strokeStyle = 'rgba(59,33,65,0.95)';
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 4.5;
   const labelText = (p.greaterTrial ? '⚠ ' : '') + p.sin.label.toUpperCase();
   ctx.strokeText(labelText, p.x + PIPE_W/2, p.gapY - 8);
   ctx.fillText(labelText, p.x + PIPE_W/2, p.gapY - 8);
@@ -1745,6 +1745,48 @@ function drawScore(){
   ctx.fillText(levelName(levelIndex), W/2, 76);
 }
 
+function roundRectPath(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function drawUpcomingSinBanner(){
+  const upcoming = pillars.find(p => !p.passed);
+  if (!upcoming) return;
+
+  const text = `${upcoming.sin.icon}  ${upcoming.sin.label.toUpperCase()}`;
+  ctx.save();
+  ctx.font = "800 24px 'Fredoka', sans-serif";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const paddingX = 20;
+  const boxW = ctx.measureText(text).width + paddingX * 2;
+  const boxH = 42;
+  const bx = W / 2;
+  const by = 104;
+
+  roundRectPath(bx - boxW/2, by - boxH/2, boxW, boxH, 14);
+  ctx.fillStyle = upcoming.greaterTrial ? 'rgba(120,10,10,0.88)' : 'rgba(30,15,45,0.75)';
+  ctx.fill();
+  ctx.strokeStyle = upcoming.greaterTrial ? '#FFD4D4' : '#FFD873';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.fillText(text, bx, by + 1);
+  ctx.restore();
+}
+
 function drawGreaterTrialFlash(){
   const remaining = greaterTrialFlash - Date.now();
   if (remaining <= 0) return;
@@ -1769,6 +1811,7 @@ function draw(){
   drawHeartShape(heart.x, heart.y, heart.r, heart.sick);
   drawGreaterTrialFlash();
   drawScore();
+  drawUpcomingSinBanner();
   drawGraceBadge();
   drawWoundBanner();
   drawContinuePrompt();
