@@ -331,6 +331,43 @@ function levelSpeed(idx){ return Math.min(2.6 + idx * 0.35, 6); }
 function levelGap(idx){ return Math.max(168 - idx * 14, 100); }
 function levelThreshold(idx){ return idx * 25; } // every 25 points, forever: 0, 25, 50, 75, 100...
 
+// --- Faith Journey phase ---
+// From score 500 onward, temptations don't disappear — they move FARTHER away
+// as the player's faith matures (wider gaps), while the world keeps moving
+// faster forever. Occasionally, an even strong faith still meets a real,
+// harder trial (a "greater trial" pillar with a narrower gap).
+const FAITH_PHASE_SCORE = 500;      // when this phase begins
+const FAITH_WIDEN_SCORE = 1000;     // gap keeps widening until this score, then holds steady forever
+const FAITH_GAP_START = 100;        // gap width right when the phase begins (matches the tightest normal gap)
+const FAITH_GAP_MAX = 210;          // widest the gap grows to, then plateaus
+const FAITH_SPEED_CAP = 10;         // world keeps speeding up past 500, up to this ceiling
+const FAITH_SPEED_GROWTH = 0.0009;  // how fast speed climbs per point scored past 500
+
+const GREATER_TRIAL_START_SCORE = 550;   // earliest a greater trial can appear
+const GREATER_TRIAL_INTERVAL_MAX = 40;   // points between greater trials, early on
+const GREATER_TRIAL_INTERVAL_MIN = 18;   // points between greater trials, at high scores (never fewer than this)
+const GREATER_TRIAL_SHRINK_PER = 200;    // interval shrinks by 1 point every this-many points scored
+const GREATER_TRIAL_GAP_FACTOR = 0.55;   // a greater trial's gap is this fraction of the normal gap
+
+function inFaithPhase(){ return score >= FAITH_PHASE_SCORE; }
+
+function faithGap(){
+  if (score >= FAITH_WIDEN_SCORE) return FAITH_GAP_MAX;
+  const t = (score - FAITH_PHASE_SCORE) / (FAITH_WIDEN_SCORE - FAITH_PHASE_SCORE);
+  return FAITH_GAP_START + t * (FAITH_GAP_MAX - FAITH_GAP_START);
+}
+
+function faithSpeed(){
+  return Math.min(FAITH_SPEED_CAP, levelSpeed(levelIndex) + (score - FAITH_PHASE_SCORE) * FAITH_SPEED_GROWTH);
+}
+
+function greaterTrialInterval(){
+  return Math.max(
+    GREATER_TRIAL_INTERVAL_MIN,
+    GREATER_TRIAL_INTERVAL_MAX - Math.floor((score - FAITH_PHASE_SCORE) / GREATER_TRIAL_SHRINK_PER)
+  );
+}
+
 // The higher the player gets, the more generous and eventful the game becomes
 function bonusScoreChance(idx){ return Math.min(0.45, 0.15 + idx * 0.025); } // chance a passed pillar is worth +5 instead of +1
 function charityIntervalForLevel(idx){ return Math.max(8, CHARITY_INTERVAL - idx); } // Works of Mercy appear more often over time
@@ -347,6 +384,9 @@ const CONFESSION_R = 30;
 let currentGap = levelGap(0);
 let pipeSpeed = levelSpeed(0);
 let levelIndex = 0;
+let nextGreaterTrialScore = GREATER_TRIAL_START_SCORE;
+const GREATER_TRIAL_FLASH_DURATION = 700; // ms the warning flash stays visible
+let greaterTrialFlash = 0; // timestamp until which the flash should render
 
 // --- Level 500 walking scene ---
 const WALK_LEVEL_INDEX = 499; // levelName shows idx+1, so this is "Level 500"
@@ -534,6 +574,12 @@ function playCharity(){
     setTimeout(() => tone(f, f, 0.16, 'triangle', 0.16), i * 80);
   });
 }
+function playGreaterTrial(){
+  if (!soundOn || !audioCtx) return;
+  // a low, ominous double-tone — distinct from the cheerful cues above
+  tone(160, 90, 0.28, 'sawtooth', 0.2);
+  setTimeout(() => tone(140, 75, 0.3, 'sawtooth', 0.18), 140);
+}
 
 soundBtn.addEventListener('click', ()=>{
   soundOn = !soundOn;
@@ -553,6 +599,7 @@ function resetGame(){
   graceSinLabel = null;
   charityTarget = null;
   nextCharityScore = CHARITY_INTERVAL;
+  nextGreaterTrialScore = GREATER_TRIAL_START_SCORE;
   charityToast = null;
   roses = [];
   rainbow = { active: false, startedAt: 0, duration: 15000 };
@@ -688,6 +735,11 @@ continueBtn.addEventListener('click', ()=>{
     levelIndex = saved.levelIndex;
     pipeSpeed = levelSpeed(levelIndex);
     currentGap = levelGap(levelIndex);
+    if (inFaithPhase()){
+      currentGap = faithGap();
+      pipeSpeed = faithSpeed();
+      nextGreaterTrialScore = Math.max(GREATER_TRIAL_START_SCORE, score + 10);
+    }
     if (levelIndex >= WALK_LEVEL_INDEX){
       walkMode = true;
       heart.x = 90;
@@ -1487,12 +1539,25 @@ const PILLAR_COLORS = [
   { main: '#4A2E2E', cap: '#251616' }  // dried-blood brown
 ];
 
+const GREATER_TRIAL_COLORS = { main: '#241017', cap: '#0D0509' }; // near-black, marks a "greater trial"
+
 function spawnPillar(){
-  const gapY = 90 + Math.random()*(H - 28 - currentGap - 90);
+  let gap = currentGap;
+  let greaterTrial = false;
+
+  if (score >= GREATER_TRIAL_START_SCORE && score >= nextGreaterTrialScore){
+    greaterTrial = true;
+    gap = Math.max(70, currentGap * GREATER_TRIAL_GAP_FACTOR);
+    nextGreaterTrialScore = score + greaterTrialInterval();
+    playGreaterTrial();
+    greaterTrialFlash = Date.now() + GREATER_TRIAL_FLASH_DURATION;
+  }
+
+  const gapY = 90 + Math.random()*(H - 28 - gap - 90);
   const sinPool = sinsForLevel(levelIndex);
   const sin = sinPool[Math.floor(Math.random()*sinPool.length)];
-  const colors = PILLAR_COLORS[Math.floor(Math.random()*PILLAR_COLORS.length)];
-  pillars.push({ x: W + PIPE_W, gapY, gap: currentGap, passed:false, sin, colors });
+  const colors = greaterTrial ? GREATER_TRIAL_COLORS : PILLAR_COLORS[Math.floor(Math.random()*PILLAR_COLORS.length)];
+  pillars.push({ x: W + PIPE_W, gapY, gap, passed:false, sin, colors, greaterTrial });
 }
 
 function spawnCharity(){
@@ -1562,20 +1627,28 @@ function drawPillar(p){
   const botY = p.gapY + p.gap;
   const botH = H - botY - 28;
 
+  if (p.greaterTrial){
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,40,40,0.85)';
+    ctx.shadowBlur = 22;
+  }
+
   drawThornBranch(p.x, 0, PIPE_W, topH, p.colors, true);
   drawThornBranch(p.x, botY, PIPE_W, botH, p.colors, false);
 
+  if (p.greaterTrial) ctx.restore();
+
   // sin icon
-  ctx.font = '28px sans-serif';
+  ctx.font = p.greaterTrial ? '34px sans-serif' : '28px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(p.sin.icon, p.x + PIPE_W/2, p.gapY - 36);
 
   // sin label
   ctx.font = "800 16px 'Fredoka', sans-serif";
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = p.greaterTrial ? '#FFD4D4' : '#fff';
   ctx.strokeStyle = 'rgba(59,33,65,0.95)';
   ctx.lineWidth = 4;
-  const labelText = p.sin.label.toUpperCase();
+  const labelText = (p.greaterTrial ? '⚠ ' : '') + p.sin.label.toUpperCase();
   ctx.strokeText(labelText, p.x + PIPE_W/2, p.gapY - 8);
   ctx.fillText(labelText, p.x + PIPE_W/2, p.gapY - 8);
 }
@@ -1618,6 +1691,10 @@ function update(){
   }
   else if (state === 'playing'){
     frame++;
+    if (inFaithPhase()){
+      currentGap = faithGap();
+      pipeSpeed = faithSpeed();
+    }
     const slow = charityTarget ? 0.3 : 1;
 
     if (charityTarget){
@@ -1791,6 +1868,17 @@ function drawScore(){
   ctx.fillText(levelName(levelIndex), W/2, 76);
 }
 
+function drawGreaterTrialFlash(){
+  const remaining = greaterTrialFlash - Date.now();
+  if (remaining <= 0) return;
+  const t = remaining / GREATER_TRIAL_FLASH_DURATION; // 1 -> 0
+  const grad = ctx.createRadialGradient(W/2, H/2, H*0.25, W/2, H/2, H*0.72);
+  grad.addColorStop(0, 'rgba(255,40,40,0)');
+  grad.addColorStop(1, `rgba(255,20,20,${0.55 * t})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+}
+
 function draw(){
   drawBackground();
   if (walkMode){
@@ -1809,6 +1897,7 @@ function draw(){
     drawCharityTarget();
     drawScorePopups();
     drawHeartShape(heart.x, heart.y, heart.r, heart.sick);
+    drawGreaterTrialFlash();
   }
   drawScore();
   drawGraceBadge();
