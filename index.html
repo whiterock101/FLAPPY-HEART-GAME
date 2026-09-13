@@ -1925,7 +1925,8 @@ function flap(){
     state = 'playing';
     requestAnimationFrame(loop);
     playFlap();
-    if (new URLSearchParams(location.search).has('test500')){
+    const params = new URLSearchParams(location.search);
+    if (params.has('test500')){
       levelIndex = WALK_LEVEL_INDEX;
       score = levelThreshold(WALK_LEVEL_INDEX);
       pipeSpeed = levelSpeed(levelIndex);
@@ -1934,6 +1935,15 @@ function flap(){
       heart.x = 90;
       heart.y = H - 62;
       heart.vy = 0;
+    } else if (params.has('testfaith')){
+      // jump just before the faith-journey phase kicks in, so you can watch
+      // the gap widen and hear/see the first greater trial within seconds
+      score = 480;
+      levelIndex = Math.floor(score / 25);
+      pipeSpeed = levelSpeed(levelIndex);
+      currentGap = levelGap(levelIndex);
+      nextGreaterTrialScore = GREATER_TRIAL_START_SCORE;
+      heart.vy = FLAP;
     } else {
       heart.vy = FLAP;
     }
