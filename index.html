@@ -409,12 +409,30 @@ const GROWTH_COLORS = ['#FFFFFF', '#FFF3D0', '#FFD873', '#FFC93C'];
 
 // Charity opportunities — the heart flies TOWARD these to help, inspired by the Works of Mercy
 const CHARITY_ITEMS = [
+  // Works of Mercy from the Bible
   { icon:'🍞', label:'Feed the hungry', msg:'You shared your bread! "Whatever you did for the least of these, you did for me." 💗' },
+  { icon:'🥤', label:'Give drink to the thirsty', msg:'You gave someone a cool cup of water! Even small gifts matter to God. 💗' },
+  { icon:'🩹', label:'Visit the sick', msg:'You visited someone who was sick! Your visit brightened their whole day. 💗' },
+  { icon:'🧦', label:'Share slippers with the barefoot', msg:'You gave your slippers to someone with no shoes! Now their feet are warm. 💗' },
+  { icon:'🧥', label:'Give warmth', msg:'You gave your coat to someone cold! Generosity warms hearts. 💗' },
+  { icon:'🙏', label:'Pray for someone', msg:'You said a little prayer for someone who needed it! God hears every prayer. 💗' },
   { icon:'😢', label:'Comfort the sad', msg:'You comforted a friend who was sad! Kindness heals hearts too. 💗' },
   { icon:'🤕', label:'Help the hurt', msg:'You helped someone who fell down! Being kind is being like Jesus. 💗' },
   { icon:'👵', label:'Help the elderly', msg:'You helped an elderly person carry their things! Honoring others pleases God. 💗' },
+
+  // Everyday good deeds a kid or teen can do at home
+  { icon:'🧹', label:'Help clean the house', msg:'You helped Mom clean the house without being asked twice! Small chores, big love. 💗' },
+  { icon:'👕', label:'Fold the clothes', msg:'You folded the laundry to help out! Little hands make a big difference. 💗' },
+  { icon:'🍽️', label:'Wash the dishes', msg:'You washed the dishes after dinner! Serving your family is serving God too. 💗' },
+  { icon:'🗑️', label:'Take out the trash', msg:'You took out the trash without complaining! Even small jobs matter. 💗' },
+  { icon:'🪴', label:'Water the plants', msg:'You watered the plants and helped them grow! Caring for creation is a gift. 💗' },
+  { icon:'🧸', label:'Pick up your toys', msg:'You picked up your toys without being told! A tidy heart, a tidy room. 💗' },
+  { icon:'📖', label:'Help with homework', msg:'You helped a sibling or friend with their homework! Sharing knowledge is generous. 💗' },
+  { icon:'🧺', label:'Share your toy', msg:'You shared your favorite toy with someone else! Sharing multiplies joy. 💗' },
+  { icon:'🤝', label:'Forgive a friend', msg:'You forgave a friend instead of staying angry! Forgiveness sets both hearts free. 💗' },
+  { icon:'💬', label:'Say a kind word', msg:'You said something kind to someone having a hard day! Words can heal. 💗' },
   { icon:'📚', label:'Teach a friend', msg:'You taught a friend something new! Sharing what you know is a gift. 💗' },
-  { icon:'🧥', label:'Give warmth', msg:'You gave your coat to someone cold! Generosity warms hearts. 💗' }
+  { icon:'🐾', label:'Care for an animal', msg:'You fed or cared for an animal that needed help! All creatures are precious to God. 💗' }
 ];
 const CHARITY_INTERVAL = 15; // a charity opportunity appears every 15 points
 const CHARITY_R = 38;
@@ -1943,6 +1961,7 @@ function flap(){
       pipeSpeed = levelSpeed(levelIndex);
       currentGap = levelGap(levelIndex);
       nextGreaterTrialScore = GREATER_TRIAL_START_SCORE;
+      nextCharityScore = score + charityIntervalForLevel(levelIndex);
       heart.vy = FLAP;
     } else {
       heart.vy = FLAP;
