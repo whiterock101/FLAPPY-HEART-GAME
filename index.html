@@ -338,11 +338,12 @@ function levelThreshold(idx){ return idx * 25; } // every 25 points, forever: 0,
 // harder trial (a "greater trial" pillar with a narrower gap). By 800, some
 // poles start drifting up and down — even distant temptation isn't static.
 const FAITH_PHASE_SCORE = 500;      // when this phase begins
-const FAITH_WIDEN_SCORE = 800;      // gap finishes widening by this score, then holds steady forever
+const FAITH_WIDEN_SCORE = 650;      // gap finishes widening by this score, then holds steady forever
 const FAITH_GAP_START = 100;        // gap width right when the phase begins (matches the tightest normal gap)
-const FAITH_GAP_MAX = 230;          // widest the gap grows to, then plateaus
-const FAITH_SPEED_CAP = 10;         // world keeps speeding up past 500, up to this ceiling
-const FAITH_SPEED_GROWTH = 0.0009;  // how fast speed climbs per point scored past 500
+const FAITH_GAP_MAX = 280;          // widest the gap grows to, then plateaus
+const FAITH_SPEED_START_SCORE = 800; // speed stays flat through the wide-gap phase; only climbs after this
+const FAITH_SPEED_CAP = 8;           // world keeps speeding up slowly after that, up to this (lower, gentler) ceiling
+const FAITH_SPEED_GROWTH = 0.0004;   // how fast speed climbs per point scored past FAITH_SPEED_START_SCORE
 
 const GREATER_TRIAL_START_SCORE = 550;   // earliest a greater trial can appear
 const GREATER_TRIAL_INTERVAL_MAX = 40;   // points between greater trials, early on
@@ -367,7 +368,9 @@ function faithGap(){
 }
 
 function faithSpeed(){
-  return Math.min(FAITH_SPEED_CAP, levelSpeed(levelIndex) + (score - FAITH_PHASE_SCORE) * FAITH_SPEED_GROWTH);
+  const base = levelSpeed(levelIndex);
+  if (score < FAITH_SPEED_START_SCORE) return base;
+  return Math.min(FAITH_SPEED_CAP, base + (score - FAITH_SPEED_START_SCORE) * FAITH_SPEED_GROWTH);
 }
 
 function greaterTrialInterval(){
