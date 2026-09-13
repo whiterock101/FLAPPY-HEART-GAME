@@ -335,11 +335,12 @@ function levelThreshold(idx){ return idx * 25; } // every 25 points, forever: 0,
 // From score 500 onward, temptations don't disappear — they move FARTHER away
 // as the player's faith matures (wider gaps), while the world keeps moving
 // faster forever. Occasionally, an even strong faith still meets a real,
-// harder trial (a "greater trial" pillar with a narrower gap).
+// harder trial (a "greater trial" pillar with a narrower gap). By 800, some
+// poles start drifting up and down — even distant temptation isn't static.
 const FAITH_PHASE_SCORE = 500;      // when this phase begins
-const FAITH_WIDEN_SCORE = 1000;     // gap keeps widening until this score, then holds steady forever
+const FAITH_WIDEN_SCORE = 800;      // gap finishes widening by this score, then holds steady forever
 const FAITH_GAP_START = 100;        // gap width right when the phase begins (matches the tightest normal gap)
-const FAITH_GAP_MAX = 210;          // widest the gap grows to, then plateaus
+const FAITH_GAP_MAX = 230;          // widest the gap grows to, then plateaus
 const FAITH_SPEED_CAP = 10;         // world keeps speeding up past 500, up to this ceiling
 const FAITH_SPEED_GROWTH = 0.0009;  // how fast speed climbs per point scored past 500
 
@@ -349,12 +350,20 @@ const GREATER_TRIAL_INTERVAL_MIN = 18;   // points between greater trials, at hi
 const GREATER_TRIAL_SHRINK_PER = 200;    // interval shrinks by 1 point every this-many points scored
 const GREATER_TRIAL_GAP_FACTOR = 0.55;   // a greater trial's gap is this fraction of the normal gap
 
+const MOVING_POLES_SCORE = 800;     // from this score on, some poles drift instead of sitting still
+const MOVING_POLES_CHANCE = 0.6;    // chance any given pole (past 800) is a moving one
+const POLE_MOVE_AMPLITUDE = 45;     // how far a moving pole drifts up/down, in px
+const POLE_MOVE_SPEED = 0.0012;     // how fast a moving pole drifts (radians per ms)
+
 function inFaithPhase(){ return score >= FAITH_PHASE_SCORE; }
 
 function faithGap(){
   if (score >= FAITH_WIDEN_SCORE) return FAITH_GAP_MAX;
+  // eased widening (fast at first) so the change feels immediately noticeable
+  // right after crossing 500, rather than creeping up slowly
   const t = (score - FAITH_PHASE_SCORE) / (FAITH_WIDEN_SCORE - FAITH_PHASE_SCORE);
-  return FAITH_GAP_START + t * (FAITH_GAP_MAX - FAITH_GAP_START);
+  const eased = Math.sqrt(Math.max(0, t));
+  return FAITH_GAP_START + eased * (FAITH_GAP_MAX - FAITH_GAP_START);
 }
 
 function faithSpeed(){
@@ -376,7 +385,7 @@ function angelIntervalForLevel(idx){ return Math.max(8000, ANGEL_CHECK_INTERVAL 
 
 const GRAVITY = 0.42;
 const FLAP = -7.6;
-const PIPE_W = 78;
+const PIPE_W = 104;
 const SPAWN_EVERY = 160; // frames — more distance between pillars
 const WOUND_DURATION = 5000; // ms to reach confession
 const CONFESSION_R = 30;
@@ -833,10 +842,9 @@ function drawWings(x, y, r, broken){
 function drawHalo(x, y, r, visible){
   if (!visible) return;
   const pulse = 1 + Math.sin(Date.now()/260) * 0.06;
-  const scale = 1 + levelIndex * 0.12;
   ctx.save();
   ctx.translate(x, y - r*1.9);
-  ctx.scale(pulse * scale, pulse * scale * 0.4);
+  ctx.scale(pulse, pulse * 0.4);
   ctx.beginPath();
   ctx.arc(0, 0, r*0.85, 0, Math.PI*2);
   ctx.strokeStyle = '#FFD873';
@@ -844,14 +852,6 @@ function drawHalo(x, y, r, visible){
   ctx.shadowColor = 'rgba(255,216,115,0.9)';
   ctx.shadowBlur = 12 + levelIndex*4;
   ctx.stroke();
-  // extra outer ring appears from Level 3 onward — a visible sign of growth
-  if (levelIndex >= 2){
-    ctx.beginPath();
-    ctx.arc(0, 0, r*1.25, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(255,216,115,0.5)';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-  }
   ctx.restore();
 }
 
@@ -1412,7 +1412,13 @@ function spawnPillar(){
   const sinPool = sinsForLevel(levelIndex);
   const sin = sinPool[Math.floor(Math.random()*sinPool.length)];
   const colors = greaterTrial ? GREATER_TRIAL_COLORS : PILLAR_COLORS[Math.floor(Math.random()*PILLAR_COLORS.length)];
-  pillars.push({ x: W + PIPE_W, gapY, gap, passed:false, sin, colors, greaterTrial });
+  const moving = score >= MOVING_POLES_SCORE && Math.random() < MOVING_POLES_CHANCE;
+  const pillar = { x: W + PIPE_W, gapY, gap, passed:false, sin, colors, greaterTrial, moving };
+  if (moving){
+    pillar.baseGapY = gapY;
+    pillar.movePhase = Math.random() * Math.PI * 2;
+  }
+  pillars.push(pillar);
 }
 
 function spawnCharity(){
@@ -1426,7 +1432,7 @@ function spawnCharity(){
   };
 }
 
-function drawThornBranch(x, y, w, h, colors, facingGap){
+function drawThornBranch(x, y, w, h, colors, facingGap, icon){
   if (h <= 0) return;
   const trunkW = w * 0.42;
   const trunkX = x + (w - trunkW) / 2;
@@ -1445,20 +1451,40 @@ function drawThornBranch(x, y, w, h, colors, facingGap){
   ctx.quadraticCurveTo(trunkX, y, trunkX + 4, y);
   ctx.closePath();
   ctx.fill();
+  ctx.save();
+  ctx.clip();
 
-  // alternating thorn spikes along the trunk
+  // fill the trunk with a repeating pattern of the sin's own icon —
+  // snakes for Lies, coins for Greed, etc. — so the pole visibly IS the sin
+  ctx.globalAlpha = 0.92;
+  ctx.font = `${Math.round(trunkW * 0.85)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const spacing = trunkW * 0.95;
+  const cx = trunkX + trunkW / 2;
+  let ty = y + spacing * 0.6;
+  let row = 0;
+  while (ty < y + h + spacing/2){
+    ctx.fillText(icon, cx, ty);
+    ty += spacing;
+    row++;
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // alternating small thorn spikes along the edges, for texture
   ctx.fillStyle = colors.cap;
-  const spacing = 24;
-  const count = Math.floor(h / spacing);
+  const spikeSpacing = 24;
+  const count = Math.floor(h / spikeSpacing);
   for (let i = 0; i < count; i++){
-    const ty = y + i*spacing + spacing/2;
+    const sy = y + i*spikeSpacing + spikeSpacing/2;
     const side = i % 2 === 0 ? -1 : 1;
     const trunkEdge = side < 0 ? trunkX : trunkX + trunkW;
-    const tipX = trunkEdge + side * (w * 0.36);
+    const tipX = trunkEdge + side * (w * 0.20);
     ctx.beginPath();
-    ctx.moveTo(trunkEdge, ty - 6);
-    ctx.lineTo(tipX, ty);
-    ctx.lineTo(trunkEdge, ty + 6);
+    ctx.moveTo(trunkEdge, sy - 6);
+    ctx.lineTo(tipX, sy);
+    ctx.lineTo(trunkEdge, sy + 6);
     ctx.closePath();
     ctx.fill();
   }
@@ -1467,11 +1493,11 @@ function drawThornBranch(x, y, w, h, colors, facingGap){
   const capY = facingGap ? y + h : y;
   const dir = facingGap ? 1 : -1;
   for (let j = -1; j <= 1; j++){
-    const tx = x + w/2 + j*13;
+    const tx = x + w/2 + j*15;
     ctx.beginPath();
-    ctx.moveTo(tx - 7, capY);
-    ctx.lineTo(tx, capY + dir*18);
-    ctx.lineTo(tx + 7, capY);
+    ctx.moveTo(tx - 8, capY);
+    ctx.lineTo(tx, capY + dir*20);
+    ctx.lineTo(tx + 8, capY);
     ctx.closePath();
     ctx.fill();
   }
@@ -1488,8 +1514,8 @@ function drawPillar(p){
     ctx.shadowBlur = 22;
   }
 
-  drawThornBranch(p.x, 0, PIPE_W, topH, p.colors, true);
-  drawThornBranch(p.x, botY, PIPE_W, botH, p.colors, false);
+  drawThornBranch(p.x, 0, PIPE_W, topH, p.colors, true, p.sin.icon);
+  drawThornBranch(p.x, botY, PIPE_W, botH, p.colors, false, p.sin.icon);
 
   if (p.greaterTrial) ctx.restore();
 
@@ -1562,7 +1588,15 @@ function update(){
 
     if (!charityTarget && frame % SPAWN_EVERY === 0) spawnPillar();
 
-    pillars.forEach(p => p.x -= pipeSpeed * slow);
+    pillars.forEach(p => {
+      p.x -= pipeSpeed * slow;
+      if (p.moving){
+        const minY = 90;
+        const maxY = H - 28 - p.gap;
+        const raw = p.baseGapY + Math.sin(Date.now() * POLE_MOVE_SPEED + p.movePhase) * POLE_MOVE_AMPLITUDE;
+        p.gapY = Math.max(minY, Math.min(maxY, raw));
+      }
+    });
     pillars = pillars.filter(p => p.x > -PIPE_W - 10);
 
     if (!charityTarget){
